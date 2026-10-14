@@ -193,6 +193,37 @@
         }
       }
     },
+    "screens": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["title", "blocks"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "example": { "type": "boolean" },
+          "blocks": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 12,
+            "items": {
+              "type": "object",
+              "required": ["type", "label"],
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["header", "nav", "stats", "chart", "list", "form", "button", "text", "image"]
+                },
+                "label": { "type": "string", "minLength": 1, "maxLength": 120 }
+              }
+            }
+          },
+          "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    },
     "diagrams": {
       "type": "array",
       "maxItems": 6,

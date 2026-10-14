@@ -65,7 +65,7 @@ T1 Scaffold
 - [x] Task 4: `check_coverage.py`
 - [x] Task 5: Table slides
 - [x] Task 6: Diagram slides
-- [ ] Task 7: Screen slides
+- [x] Task 7: Screen slides
 - [ ] Task 8: Plan slides
 - [ ] Task 9: Sample fixtures render both decks
 

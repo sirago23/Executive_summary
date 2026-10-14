@@ -176,3 +176,16 @@ def test_unknown_kind_and_unlisted_src_fail(data):
     errors = validate.validate(data)
     assert any(e.startswith("diagrams[0].kind: must be one of") for e in errors)
     assert any(e.startswith("diagrams[0].src") for e in errors)
+
+
+def test_screen_blocks_need_a_known_type_and_a_label(data):
+    data["screens"] = [{"title": "Home", "blocks": [{"type": "video", "label": "x"}]}]
+    assert any(e.startswith("screens[0].blocks[0].type") for e in validate.validate(data))
+    data["screens"] = [{"title": "Home", "blocks": [{"type": "text"}]}]
+    assert "screens[0].blocks[0].label: missing required field" in validate.validate(data)
+
+
+def test_screens_are_limited_to_six(data):
+    screen = {"title": "S", "blocks": [{"type": "text", "label": "x"}]}
+    data["screens"] = [screen] * 7
+    assert "screens: has more than 6 items" in validate.validate(data)

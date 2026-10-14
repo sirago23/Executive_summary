@@ -366,3 +366,137 @@ def test_diagram_text_is_escaped_in_html_and_mermaid(data):
 def test_diagrams_are_dropped_when_absent(data):
     ids = slide_ids(render.render_deck(data))
     assert "architecture" not in ids and "flow" not in ids
+
+
+# --- Task 7: screen slides ------------------------------------------------------------------
+
+PNG = (
+    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00"
+    b"\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xa7\x9a\xa0\xa0"
+    b"\x00\x00\x00\x00IEND\xaeB`\x82"
+)
+
+
+def with_screens(data: dict) -> dict:
+    data["screens"] = [
+        {
+            "title": "Home",
+            "blocks": [
+                {"type": "header", "label": "Billing Record"},
+                {"type": "stats", "label": "Money in, Money out"},
+                {"type": "button", "label": "Add a record"},
+            ],
+            "src": SRC,
+        },
+        {"title": "Add record", "blocks": [{"type": "form", "label": "Amount, Date"}]},
+    ]
+    return data
+
+
+def test_screens_slide_sits_between_criteria_and_architecture(data):
+    with_tables(data)
+    with_diagrams(data)
+    with_screens(data)
+    ids = slide_ids(render.render_deck(data))
+    assert ids.index("criteria") < ids.index("screens") < ids.index("architecture")
+
+
+def test_wireframes_show_with_an_example_label_and_two_fit_one_slide(data):
+    html = render.render_deck(with_screens(data))
+    assert slide_ids(html).count("screens") == 1
+    assert html.count("Example layout, not the final design") == 2
+    assert "Add a record" in html and "Money out" in html
+
+
+def test_more_than_two_screens_continue_on_another_slide(data):
+    with_screens(data)
+    data["screens"] += [dict(data["screens"][1], title=f"S{i}") for i in range(3)]
+    ids = slide_ids(render.render_deck(data))
+    assert [i for i in ids if i.startswith("screens")] == ["screens", "screens-2", "screens-3"]
+
+
+def test_unknown_block_type_fails_validation(data):
+    with_screens(data)
+    data["screens"][0]["blocks"][0]["type"] = "video"
+    with pytest.raises(render.InvalidSummary) as exc:
+        render.render_deck(data)
+    assert "screens[0].blocks[0].type: must be one of" in str(exc.value)
+
+
+def test_no_screens_and_no_design_folder_means_no_slide(data, tmp_path):
+    assert "screens" not in slide_ids(render.render_deck(data, project_dir=tmp_path))
+
+
+def make_design(tmp_path: Path, folder: str = "design", names=("home.png", "add.png")) -> Path:
+    (tmp_path / folder).mkdir(parents=True)
+    for name in names:
+        (tmp_path / folder / name).write_bytes(PNG)
+    return tmp_path
+
+
+@pytest.mark.parametrize("folder", ["design", "docs/design", "mockups"])
+def test_design_images_replace_wireframes(data, tmp_path, folder):
+    make_design(tmp_path, folder)
+    html = render.render_deck(with_screens(data), project_dir=tmp_path)
+    assert html.count("data:image/png;base64,") == 2
+    assert "Example layout" not in html
+    assert "screens" in slide_ids(html)
+
+
+def test_design_images_make_a_slide_even_without_screens(data, tmp_path):
+    make_design(tmp_path)
+    assert "screens" in slide_ids(render.render_deck(data, project_dir=tmp_path))
+
+
+def test_other_file_types_in_the_design_folder_are_ignored(data, tmp_path):
+    make_design(tmp_path, names=("notes.txt", "run.exe", "home.png"))
+    html = render.render_deck(data, project_dir=tmp_path)
+    assert html.count("data:image/png;base64,") == 1
+
+
+def test_svg_design_is_embedded_as_an_image_only(data, tmp_path):
+    (tmp_path / "design").mkdir()
+    (tmp_path / "design" / "logo.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>', encoding="utf-8"
+    )
+    html = render.render_deck(data, project_dir=tmp_path)
+    assert "data:image/svg+xml;base64," in html
+    assert "<svg" not in html
+    assert "<img " in html
+
+
+def test_images_over_the_size_limit_are_left_out_with_a_note(data, tmp_path, monkeypatch):
+    make_design(tmp_path, names=("a.png", "b.png", "c.png"))
+    monkeypatch.setattr(render, "MAX_IMAGE_BYTES", len(PNG) * 2)
+    html = render.render_deck(data, project_dir=tmp_path)
+    assert html.count("data:image/png;base64,") == 2
+    assert "1 more image was left out" in html
+
+
+def test_design_paths_cannot_leave_the_project_folder(data, tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.png").write_bytes(PNG)
+    project = tmp_path / "project"
+    project.mkdir()
+    try:
+        (project / "design").symlink_to(outside, target_is_directory=True)
+    except OSError:
+        # Windows without symlink rights: a junction points outside the folder the same way.
+        made = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(project / "design"), str(outside)],
+            capture_output=True,
+            check=False,
+        )
+        if made.returncode != 0:
+            pytest.skip("cannot link folders here")
+    html = render.render_deck(data, project_dir=project)
+    assert "data:image" not in html
+
+
+def test_image_alt_text_is_the_file_name_without_path_and_is_escaped(data, tmp_path):
+    (tmp_path / "design").mkdir()
+    (tmp_path / "design" / "My home.png").write_bytes(PNG)
+    html = render.render_deck(data, project_dir=tmp_path)
+    assert 'alt="My home"' in html
+    assert str(tmp_path) not in html

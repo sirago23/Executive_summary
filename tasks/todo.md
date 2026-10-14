@@ -130,7 +130,7 @@ Standard checks used below:
 **Files:** `S/mermaid.py`, `summary.schema.json`, `S/validate.py`, `S/render.py`, `deck.js`, tests
 **Scope:** M
 
-### - [ ] Task 7: Screen slides
+### - [x] Task 7: Screen slides
 
 **Description:** Write `wireframe.py`, which turns a screen's blocks (`header`, `nav`, `stats`, `chart`, `list`, `form`, `button`, `text`, `image`) into grayscale HTML, and add slide 5. If the project has images in `design/`, `docs/design/` or `mockups/` (PNG, JPEG, WebP, SVG as image only), embed them as data URIs instead, up to 5 MB in total. Every wireframe has the label "Example layout, not the final design".
 

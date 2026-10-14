@@ -10,6 +10,7 @@ that is not in the summary never produces a slide.
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import sys
 from html import escape
@@ -19,10 +20,21 @@ from string import Template
 from mermaid import to_flowchart
 from paths import output_path
 from validate import validate
+from wireframe import render_wireframe
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
 STORIES_PER_SLIDE = 6
 ROWS_PER_SLIDE = 8
+WIREFRAMES_PER_SLIDE = 2
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+DESIGN_FOLDERS = ("design", "docs/design", "mockups")
+IMAGE_TYPES = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+}
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
 MERMAID_SRI = "sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I"
 MERMAID_TAG = (
@@ -149,6 +161,82 @@ def render_criteria(data: dict) -> list[Slide]:
         for criterion in s.get("criteria", [])
     ]
     return table_slides("criteria", "How we will know it works", ["Story", "It works when"], rows)
+
+
+def find_design_images(project_dir: Path | None) -> tuple[list[dict], int]:
+    """Images in the project's design folders as data URIs, and how many were left out.
+
+    Only files directly inside the folders count, and every file must resolve to a place inside
+    the project folder. Images are embedded until MAX_IMAGE_BYTES is reached.
+    """
+    if project_dir is None:
+        return [], 0
+    root = project_dir.resolve()
+    images: list[dict] = []
+    left_out = 0
+    total = 0
+    for folder in DESIGN_FOLDERS:
+        directory = (root / folder).resolve()
+        if not directory.is_dir() or not directory.is_relative_to(root):
+            continue
+        for path in sorted(directory.iterdir()):
+            kind = IMAGE_TYPES.get(path.suffix.lower())
+            real = path.resolve()
+            if kind is None or not real.is_file() or not real.is_relative_to(root):
+                continue
+            size = real.stat().st_size
+            if total + size > MAX_IMAGE_BYTES:
+                left_out += 1
+                continue
+            total += size
+            encoded = base64.b64encode(real.read_bytes()).decode("ascii")
+            images.append({"name": path.stem, "uri": f"data:{kind};base64,{encoded}"})
+    return images, left_out
+
+
+def left_out_note(count: int) -> str:
+    if not count:
+        return ""
+    many = count != 1
+    return (
+        f'<p class="src">{count} more image{"s" if many else ""} '
+        f"{'were' if many else 'was'} left out because the deck would get too large.</p>"
+    )
+
+
+def render_screens(data: dict, images: list[dict], left_out: int) -> list[Slide]:
+    if images:
+        slides = []
+        for page, image in enumerate(images, start=1):
+            id_suffix, title_suffix = suffix(page)
+            title = f"Screens{title_suffix}"
+            note = left_out_note(left_out) if page == len(images) else ""
+            body = (
+                f"<h2>{esc(title)}</h2>"
+                f'<figure class="design"><img src="{esc(image["uri"])}" alt="{esc(image["name"])}">'
+                f"<figcaption>{esc(image['name'])}</figcaption></figure>{note}"
+            )
+            slides.append((f"screens{id_suffix}", title, body))
+        return slides
+
+    screens = data.get("screens", [])
+    note = left_out_note(left_out)
+    if not screens:
+        return [("screens", "Screens", f"<h2>Screens</h2>{note}")] if note else []
+    slides = []
+    groups = chunks(screens, WIREFRAMES_PER_SLIDE)
+    for page, group in enumerate(groups, start=1):
+        id_suffix, title_suffix = suffix(page)
+        title = f"Example screens{title_suffix}"
+        sources = "".join(src_note(s["src"]) for s in group if s.get("src"))
+        closing = note if page == len(groups) else ""
+        body = (
+            f"<h2>{esc(title)}</h2>"
+            f'<div class="wireframes">{"".join(render_wireframe(s) for s in group)}</div>'
+            f"{sources}{closing}"
+        )
+        slides.append((f"screens{id_suffix}", title, body))
+    return slides
 
 
 def diagram_fallback(diagram: dict) -> str:
@@ -295,6 +383,7 @@ SLIDE_BUILDERS = [
     render_goal,
     render_stories,
     render_criteria,
+    render_screens,
     render_architecture,
     render_flow,
     render_data,
@@ -308,18 +397,22 @@ SLIDE_BUILDERS = [
 ]
 
 
-def build_slides(data: dict) -> list[Slide]:
+def build_slides(data: dict, project_dir: Path | None = None) -> list[Slide]:
+    images, left_out = find_design_images(project_dir)
     slides: list[Slide] = []
     for builder in SLIDE_BUILDERS:
-        slides.extend(builder(data))
+        if builder is render_screens:
+            slides.extend(builder(data, images, left_out))
+        else:
+            slides.extend(builder(data))
     return slides
 
 
-def render_deck(data: dict) -> str:
+def render_deck(data: dict, project_dir: Path | None = None) -> str:
     errors = validate(data)
     if errors:
         raise InvalidSummary("\n".join(errors))
-    slides = build_slides(data)
+    slides = build_slides(data, project_dir)
     toc = "\n".join(
         f'      <li><a href="#s-{esc(sid)}">{esc(title)}</a></li>' for sid, title, _ in slides
     )
@@ -353,7 +446,7 @@ def main(argv: list[str]) -> int:
         return 1
 
     try:
-        html = render_deck(data)
+        html = render_deck(data, project_dir=Path.cwd())
     except InvalidSummary as exc:
         print(exc, file=sys.stderr)
         return 1
