@@ -27,6 +27,7 @@ Rule used: code review Critical and Important, and security Critical, High and M
 | Code I9: print in dark mode | Print palette is always light, and each diagram has a light copy drawn for print | Browser check (print emulation) |
 | Code I10: raw Mermaid text before drawing; failed draw cannot recover | "Drawing" text until drawn; table after a failure or 8 s; a later successful draw replaces the table | Browser check (online, blocked script) |
 | Code I11: weak tests | Wireframe types compared with the schema; schema keyword guard; hostile text in every field; sample tests use `esc` and check notes in the deck; dead placeholder test removed | |
+| Code S9: story text repeated on every criteria row | Fixed on your request: the story shows once, spanning its rows, and repeats at the top of a continuation slide | `test_render.py` |
 | Code S1, S3, S7 | Shared `common.py`; duplicate ids rejected; whitespace-only text rejected; `impact` class escaped | |
 
 ## Logged, not fixed
@@ -39,7 +40,6 @@ Rule used: code review Critical and Important, and security Critical, High and M
 | Code S6: `docs/SPEC.md` and `other/SPEC.md` share an output name | Needs a project-level decision when `links.json` is built (Task 10) |
 | Code S7: phase with no tasks has no heading on the tasks slide | It still shows on the phases slide |
 | Code S7: arrow keys while a button has focus | Kept on purpose: after clicking Next, the arrow keys must still work |
-| Code S9: criteria table repeats the story text per row | Cosmetic |
 | Schema fields nothing reads (`screens[].example`) | Kept for the spec's format |
 | No automated tests of `deck.js` | Checked by hand in a browser each time. A test runner for it is not worth a dependency now |
 | Sec I4: commit author email is public in history | Your call. GitHub offers a noreply address |

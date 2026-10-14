@@ -116,30 +116,52 @@ def render_stories(data: dict) -> list[Slide]:
     return slides
 
 
+def table_rows(group: list[tuple[list[str], str]], merge_first: bool) -> str:
+    """HTML rows for one slide. With `merge_first`, neighbouring rows that start with the same
+    cell show it once, spanning those rows, and each group starts with a stronger top line."""
+    out = []
+    for index, (cells, src) in enumerate(group):
+        previous = group[index - 1][0][0] if index else None
+        merged = merge_first and cells[0] == previous
+        start = merge_first and not merged
+        shown = cells[1:] if merged else cells
+        tds = "".join(f"<td>{cell}</td>" for cell in shown)
+        if start:
+            span = 1
+            while index + span < len(group) and group[index + span][0][0] == cells[0]:
+                span += 1
+            if span > 1:
+                tds = f'<td rowspan="{span}">{cells[0]}</td>' + "".join(
+                    f"<td>{cell}</td>" for cell in cells[1:]
+                )
+        row_class = ' class="group-start"' if start else ""
+        out.append(f'<tr{row_class}>{tds}<td class="src">{esc(src)}</td></tr>')
+    return "".join(out)
+
+
 def table_slides(
-    slide_id: str, title: str, headers: list[str], rows: list[tuple[list[str], str]]
+    slide_id: str,
+    title: str,
+    headers: list[str],
+    rows: list[tuple[list[str], str]],
+    merge_first: bool = False,
 ) -> list[Slide]:
     """Slides for a table. Each row is (cells as escaped HTML, src). A source column is added,
     and the table continues on another slide after ROWS_PER_SLIDE rows."""
     if not rows:
         return []
     head = "".join(f"<th>{esc(h)}</th>" for h in [*headers, "Source"])
+    table_class = ' class="grouped"' if merge_first else ""
     slides = []
     for page, group in enumerate(chunks(rows, ROWS_PER_SLIDE), start=1):
         id_suffix, title_suffix = suffix(page)
-        body = "".join(
-            "<tr>"
-            + "".join(f"<td>{cell}</td>" for cell in cells)
-            + f'<td class="src">{esc(src)}</td></tr>'
-            for cells, src in group
-        )
         shown = f"{title}{title_suffix}"
         slides.append(
             (
                 f"{slide_id}{id_suffix}",
                 shown,
-                f"<h2>{esc(shown)}</h2><table><thead><tr>{head}</tr></thead>"
-                f"<tbody>{body}</tbody></table>",
+                f"<h2>{esc(shown)}</h2><table{table_class}><thead><tr>{head}</tr></thead>"
+                f"<tbody>{table_rows(group, merge_first)}</tbody></table>",
             )
         )
     return slides
@@ -151,7 +173,9 @@ def render_criteria(data: dict) -> list[Slide]:
         for s in data.get("stories", [])
         for criterion in s.get("criteria", [])
     ]
-    return table_slides("criteria", "How we will know it works", ["Story", "It works when"], rows)
+    return table_slides(
+        "criteria", "How we will know it works", ["Story", "It works when"], rows, merge_first=True
+    )
 
 
 def left_out_note(count: int) -> str:

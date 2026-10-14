@@ -847,3 +847,35 @@ def test_hostile_text_in_every_field_is_escaped(data):
     assert "<img src=x" not in html
     assert html.count("&lt;script&gt;alert(1)&lt;/script&gt;") > 20
     assert len(re.findall(r"<script", html)) == 2  # the pinned Mermaid tag and deck.js
+
+
+# --- criteria table groups rows by story --------------------------------------------------------
+
+
+def test_a_story_is_written_once_for_all_of_its_criteria_rows(data):
+    data["stories"][0]["criteria"] = ["One.", "Two.", "Three."]
+    data["stories"][1]["criteria"] = ["Four."]
+    html = render.render_deck(data)
+    table = html.split('id="s-criteria"')[1].split("</section>")[0]
+    story_one = render.esc("S1: " + data["stories"][0]["want"])
+    assert table.count(story_one) == 1
+    assert 'rowspan="3"' in table
+    assert table.count("<tr") - 1 == 4  # header row plus one row per criterion
+    for text in ["One.", "Two.", "Three.", "Four."]:
+        assert text in table
+
+
+def test_a_story_split_across_slides_is_repeated_at_the_top_of_the_next_one(data):
+    data["stories"][0]["criteria"] = [f"Criterion {i}" for i in range(10)]
+    html = render.render_deck(data)
+    story_one = render.esc("S1: " + data["stories"][0]["want"])
+    first = html.split('id="s-criteria"')[1].split("</section>")[0]
+    second = html.split('id="s-criteria-2"')[1].split("</section>")[0]
+    assert first.count(story_one) == 1 and 'rowspan="8"' in first
+    assert second.count(story_one) == 1 and 'rowspan="2"' in second
+
+
+def test_other_tables_are_not_merged(data):
+    with_tables(data)
+    html = render.render_deck(data)
+    assert "rowspan" not in html.split('id="s-stack"')[1].split("</section>")[0]
