@@ -61,18 +61,19 @@
       "maxItems": 40,
       "items": {
         "type": "object",
-        "required": ["id", "as", "want", "so", "src"],
+        "required": ["id", "as", "want", "src"],
         "additionalProperties": false,
         "properties": {
           "id": { "type": "string", "minLength": 1, "maxLength": 20 },
           "as": { "type": "string", "minLength": 1, "maxLength": 120 },
           "want": { "type": "string", "minLength": 1, "maxLength": 300 },
-          "so": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "so": { "type": "string", "maxLength": 300 },
           "criteria": {
             "type": "array",
             "maxItems": 20,
             "items": { "type": "string", "minLength": 1, "maxLength": 300 }
           },
+          "criteria_src": { "type": "string", "minLength": 1, "maxLength": 300 },
           "src": { "type": "string", "minLength": 1, "maxLength": 300 }
         }
       }

@@ -1,0 +1,1031 @@
+{
+  "project": {
+    "name": "Billing Record",
+    "tagline": "Record income and expenses from a photo of a bank slip or bill.",
+    "status": "Draft, awaiting approval",
+    "date": "14 Oct 2026"
+  },
+  "sources": [
+    {
+      "path": "sample/SPEC_sample.md",
+      "modified": "2026-10-14",
+      "found": [
+        "goal",
+        "stories",
+        "criteria",
+        "screens",
+        "diagrams",
+        "data",
+        "stack",
+        "rules",
+        "decisions",
+        "success"
+      ]
+    },
+    {
+      "path": "sample/plan_sample.md",
+      "modified": "2026-10-14",
+      "found": [
+        "phases",
+        "checkpoints",
+        "risks",
+        "decisions"
+      ]
+    },
+    {
+      "path": "sample/todo_sample.md",
+      "modified": "2026-10-14",
+      "found": [
+        "tasks"
+      ]
+    }
+  ],
+  "skipped": [
+    {
+      "src": "sample/SPEC_sample.md > Commands",
+      "reason": "Developer commands, not useful to the owner."
+    },
+    {
+      "src": "sample/SPEC_sample.md > Project Structure",
+      "reason": "Folder layout of the code, not useful to the owner."
+    },
+    {
+      "src": "sample/SPEC_sample.md > Code Style",
+      "reason": "Code conventions and a code example, not useful to the owner."
+    },
+    {
+      "src": "sample/SPEC_sample.md > Testing Strategy",
+      "reason": "Technical test plan. What matters to the owner is in the success criteria."
+    },
+    {
+      "src": "sample/SPEC_sample.md > Open Questions",
+      "reason": "The spec lists no open questions."
+    },
+    {
+      "src": "sample/plan_sample.md > Dependency Graph",
+      "reason": "A map of which task needs which. The phases and tasks slides show the order."
+    },
+    {
+      "src": "sample/plan_sample.md > Task List",
+      "reason": "Container for the phases and checkpoints shown on their own slides."
+    },
+    {
+      "src": "sample/plan_sample.md > Open Questions",
+      "reason": "The plan lists no open questions."
+    },
+    {
+      "src": "sample/todo_sample.md > Phase A: Foundation",
+      "reason": "Same phase as in sample/plan_sample.md, shown once."
+    },
+    {
+      "src": "sample/todo_sample.md > Phase B: Records",
+      "reason": "Same phase as in sample/plan_sample.md, shown once."
+    },
+    {
+      "src": "sample/todo_sample.md > Phase C: Insights",
+      "reason": "Same phase as in sample/plan_sample.md, shown once."
+    },
+    {
+      "src": "sample/todo_sample.md > Phase D: Capture",
+      "reason": "Same phase as in sample/plan_sample.md, shown once."
+    },
+    {
+      "src": "sample/todo_sample.md > Phase E: Finish",
+      "reason": "Same phase as in sample/plan_sample.md, shown once."
+    },
+    {
+      "src": "sample/todo_sample.md > Checkpoint A",
+      "reason": "Same checkpoint as in sample/plan_sample.md, shown once."
+    },
+    {
+      "src": "sample/todo_sample.md > Checkpoint B",
+      "reason": "Same checkpoint as in sample/plan_sample.md, shown once."
+    },
+    {
+      "src": "sample/todo_sample.md > Checkpoint C",
+      "reason": "Same checkpoint as in sample/plan_sample.md, shown once."
+    },
+    {
+      "src": "sample/todo_sample.md > Checkpoint D",
+      "reason": "Same checkpoint as in sample/plan_sample.md, shown once."
+    },
+    {
+      "src": "sample/todo_sample.md > Checkpoint: Phase 1 complete",
+      "reason": "Same checkpoint as in sample/plan_sample.md, shown once."
+    }
+  ],
+  "goal": {
+    "text": [
+      "A personal web app for one person to keep track of money coming in and going out, without typing every record by hand.",
+      "You upload a bank transfer slip or photograph a bill. The app reads the image with Claude (an AI that can read pictures) and fills in the amount, currency, date, who was paid, whether it was income or spending, and a category.",
+      "You check the result, fix anything wrong and save it. The app then adds everything up and shows totals as charts.",
+      "Slips and bills can be in Thai or English, and amounts can be in more than one currency."
+    ],
+    "src": "sample/SPEC_sample.md > Objective"
+  },
+  "stories": [
+    {
+      "id": "S1",
+      "as": "the user",
+      "want": "to upload a bank slip image and get a pre-filled record I can confirm in one click",
+      "criteria": [
+        "Accepts photos in the common formats (JPEG, PNG, WebP and HEIC) up to 10 MB.",
+        "Reads the details within 15 seconds for a typical slip. If something cannot be read, that field is left empty and marked, and nothing is saved silently.",
+        "A record made by the AI is saved only after you confirm it. The original image stays linked to the record so you can view it later.",
+        "A receipt with several items becomes one record with the total amount and one category.",
+        "Each record keeps its original amount and currency, plus its value in Thai baht (THB).",
+        "For money in another currency, the app looks up that day's exchange rate from a free service, shows it in the form and lets you change it. If the lookup fails, you must type a rate before saving.",
+        "Dates show in the Western calendar, for example 14 Oct 2026. Years in the Thai Buddhist calendar printed on slips are converted.",
+        "If a new record has the same amount, date and slip reference number as an existing one, the app warns you before saving."
+      ],
+      "criteria_src": "sample/SPEC_sample.md > Acceptance criteria",
+      "src": "sample/SPEC_sample.md > User stories"
+    },
+    {
+      "id": "S2",
+      "as": "the user",
+      "want": "to take a photo of a paper bill on my phone and get the same pre-filled record",
+      "criteria": [
+        "On a phone, choosing a file also offers the camera.",
+        "The app works on a small phone screen and on a desktop screen."
+      ],
+      "criteria_src": "sample/SPEC_sample.md > Acceptance criteria",
+      "src": "sample/SPEC_sample.md > User stories"
+    },
+    {
+      "id": "S3",
+      "as": "the user",
+      "want": "to add a record by hand when I have no image",
+      "criteria": [
+        "Every field the AI fills in can also be typed in and edited by hand."
+      ],
+      "criteria_src": "sample/SPEC_sample.md > Acceptance criteria",
+      "src": "sample/SPEC_sample.md > User stories"
+    },
+    {
+      "id": "S4",
+      "as": "the user",
+      "want": "to edit or delete any record, including ones the AI created",
+      "criteria": [
+        "Every saved record can be edited or deleted. Deleting asks you to confirm.",
+        "Ready-made categories exist for spending and for income. You can add, rename and remove categories, but a category that is in use cannot be removed until its records are moved."
+      ],
+      "criteria_src": "sample/SPEC_sample.md > Acceptance criteria",
+      "src": "sample/SPEC_sample.md > User stories"
+    },
+    {
+      "id": "S5",
+      "as": "the user",
+      "want": "to see where my money went this month in a category chart, and how income compares with expenses over time",
+      "criteria": [
+        "For a chosen period (the current month by default), the app shows total income, total spending and the difference, all in THB.",
+        "A ring-shaped chart shows spending by category, and a bar chart compares income with spending for each of the last 6 months, all in THB."
+      ],
+      "criteria_src": "sample/SPEC_sample.md > Acceptance criteria",
+      "src": "sample/SPEC_sample.md > User stories"
+    },
+    {
+      "id": "S6",
+      "as": "the user",
+      "want": "to filter records by date range, category, direction and currency",
+      "criteria": [
+        "Both charts follow the filters you set."
+      ],
+      "criteria_src": "sample/SPEC_sample.md > Acceptance criteria",
+      "src": "sample/SPEC_sample.md > User stories"
+    },
+    {
+      "id": "S7",
+      "as": "the user",
+      "want": "to export all my records to a spreadsheet file (CSV) as a backup",
+      "criteria": [
+        "One button downloads all records, or only the filtered ones, as a file that opens correctly in Excel, including Thai text."
+      ],
+      "criteria_src": "sample/SPEC_sample.md > Acceptance criteria",
+      "src": "sample/SPEC_sample.md > User stories"
+    }
+  ],
+  "screens": [
+    {
+      "title": "Dashboard",
+      "blocks": [
+        {
+          "type": "header",
+          "label": "Billing Record"
+        },
+        {
+          "type": "stats",
+          "label": "Money in, Money out, Difference"
+        },
+        {
+          "type": "chart",
+          "label": "Spending by category"
+        },
+        {
+          "type": "chart",
+          "label": "Income and spending, last 6 months"
+        },
+        {
+          "type": "button",
+          "label": "Add record"
+        }
+      ],
+      "src": "sample/SPEC_sample.md > Design Direction"
+    },
+    {
+      "title": "Upload a slip or bill",
+      "blocks": [
+        {
+          "type": "header",
+          "label": "Add record"
+        },
+        {
+          "type": "image",
+          "label": "Photo of the slip or bill"
+        },
+        {
+          "type": "button",
+          "label": "Take a photo or choose a file"
+        }
+      ],
+      "src": "sample/SPEC_sample.md > User stories"
+    },
+    {
+      "title": "Review the result",
+      "blocks": [
+        {
+          "type": "header",
+          "label": "Check this record"
+        },
+        {
+          "type": "image",
+          "label": "Your slip"
+        },
+        {
+          "type": "form",
+          "label": "Amount, Currency, Date, Who, Category, Note"
+        },
+        {
+          "type": "button",
+          "label": "Confirm and save"
+        }
+      ],
+      "src": "sample/SPEC_sample.md > Acceptance criteria"
+    },
+    {
+      "title": "All records",
+      "blocks": [
+        {
+          "type": "header",
+          "label": "Records"
+        },
+        {
+          "type": "nav",
+          "label": "Date range, Category, Direction, Currency"
+        },
+        {
+          "type": "list",
+          "label": "Newest first"
+        },
+        {
+          "type": "button",
+          "label": "Export to CSV"
+        }
+      ],
+      "src": "sample/SPEC_sample.md > User stories"
+    }
+  ],
+  "diagrams": [
+    {
+      "id": "arch",
+      "kind": "architecture",
+      "title": "How the parts fit together",
+      "nodes": [
+        {
+          "id": "phone",
+          "label": "Your phone (camera and browser)",
+          "group": "Your devices"
+        },
+        {
+          "id": "pc",
+          "label": "Browser on your PC",
+          "group": "Your devices"
+        },
+        {
+          "id": "app",
+          "label": "The Billing Record app",
+          "group": "On your PC"
+        },
+        {
+          "id": "db",
+          "label": "Saved records (database file)",
+          "group": "On your PC"
+        },
+        {
+          "id": "photos",
+          "label": "Stored photos of slips",
+          "group": "On your PC"
+        },
+        {
+          "id": "claude",
+          "label": "Claude reads the image",
+          "group": "Online services"
+        },
+        {
+          "id": "rates",
+          "label": "Daily exchange rates",
+          "group": "Online services"
+        }
+      ],
+      "edges": [
+        {
+          "from": "phone",
+          "to": "app",
+          "label": "uses over your home network"
+        },
+        {
+          "from": "pc",
+          "to": "app"
+        },
+        {
+          "from": "app",
+          "to": "db",
+          "label": "saves records"
+        },
+        {
+          "from": "app",
+          "to": "photos",
+          "label": "stores photos"
+        },
+        {
+          "from": "app",
+          "to": "claude",
+          "label": "sends the image"
+        },
+        {
+          "from": "app",
+          "to": "rates",
+          "label": "asks for a rate (date and currency only)"
+        }
+      ],
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    },
+    {
+      "id": "flow",
+      "kind": "flow",
+      "title": "Adding a record from a photo",
+      "nodes": [
+        {
+          "id": "upload",
+          "label": "You upload a slip or photograph a bill"
+        },
+        {
+          "id": "read",
+          "label": "The app reads the image with Claude"
+        },
+        {
+          "id": "rate",
+          "label": "If the money is not in THB, it looks up the exchange rate"
+        },
+        {
+          "id": "review",
+          "label": "A form opens, filled in. Missing details are marked."
+        },
+        {
+          "id": "confirm",
+          "label": "You check, fix anything wrong and confirm"
+        },
+        {
+          "id": "totals",
+          "label": "The record is saved and the totals and charts update"
+        }
+      ],
+      "edges": [
+        {
+          "from": "upload",
+          "to": "read"
+        },
+        {
+          "from": "read",
+          "to": "rate"
+        },
+        {
+          "from": "rate",
+          "to": "review"
+        },
+        {
+          "from": "review",
+          "to": "confirm"
+        },
+        {
+          "from": "confirm",
+          "to": "totals"
+        }
+      ],
+      "src": "sample/SPEC_sample.md > Objective"
+    }
+  ],
+  "data": [
+    {
+      "name": "Records",
+      "plain": "One entry for each piece of income or spending.",
+      "fields": [
+        "income or spending",
+        "amount and currency",
+        "exchange rate and the amount in THB",
+        "date",
+        "who paid or was paid",
+        "category",
+        "note",
+        "slip reference number",
+        "linked image",
+        "made by the AI or by hand"
+      ],
+      "src": "sample/SPEC_sample.md > Data Model (v1)"
+    },
+    {
+      "name": "Categories",
+      "plain": "The labels used to group records.",
+      "fields": [
+        "name",
+        "income or spending",
+        "display order"
+      ],
+      "src": "sample/SPEC_sample.md > Data Model (v1)"
+    },
+    {
+      "name": "Saved exchange rates",
+      "plain": "A memory of rates already looked up, so each date and currency is fetched only once.",
+      "fields": [
+        "date",
+        "currency",
+        "rate to THB"
+      ],
+      "src": "sample/SPEC_sample.md > Data Model (v1)"
+    }
+  ],
+  "stack": [
+    {
+      "part": "Framework",
+      "choice": "Next.js with TypeScript",
+      "plain": "A popular toolkit for building web apps. TypeScript is a stricter form of JavaScript that catches mistakes early.",
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    },
+    {
+      "part": "Runtime",
+      "choice": "Node.js 20 or newer",
+      "plain": "The program that runs the app on your PC.",
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    },
+    {
+      "part": "Database",
+      "choice": "SQLite",
+      "plain": "A database stored in one file on your computer.",
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    },
+    {
+      "part": "Reading images",
+      "choice": "Claude (Anthropic)",
+      "plain": "An AI that can read pictures. It pulls the details out of a slip or bill.",
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    },
+    {
+      "part": "Exchange rates",
+      "choice": "Frankfurter",
+      "plain": "A free online service that gives daily exchange rates.",
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    },
+    {
+      "part": "Checking input",
+      "choice": "Zod",
+      "plain": "A checker that makes sure information is complete and sensible before it is saved.",
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    },
+    {
+      "part": "Charts",
+      "choice": "Recharts",
+      "plain": "Draws the charts on the dashboard.",
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    },
+    {
+      "part": "Look and feel",
+      "choice": "Tailwind CSS",
+      "plain": "A tool for styling the screens in a consistent way.",
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    },
+    {
+      "part": "Photos",
+      "choice": "sharp",
+      "plain": "Converts iPhone photos to a common format and shrinks large images before they are sent to the AI.",
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    },
+    {
+      "part": "Automatic checks",
+      "choice": "Vitest and Playwright",
+      "plain": "Tools that test the app automatically: one checks small pieces, the other uses the app like a person would.",
+      "src": "sample/SPEC_sample.md > Tech Stack"
+    }
+  ],
+  "rules": {
+    "always": [
+      "Run the automatic checks before every save of the code.",
+      "Check all input and all AI answers before they touch the database.",
+      "Keep the AI key private on the server.",
+      "Store money as whole numbers of the smallest coin (such as satang), never as decimals.",
+      "Check for secrets and personal data before every upload to the public code site."
+    ],
+    "ask_first": [
+      "Adding a tool that is not listed in the spec.",
+      "Changing how the database is laid out after the first version.",
+      "Anything that makes real Claude calls, because it costs credits.",
+      "Changing the AI model or the instructions given to it in ways that change cost.",
+      "Making the app reachable beyond your home network in Phase 1.",
+      "Every Railway action: creating the service or storage, setting values, deploying and moving data.",
+      "Anything that adds Railway cost."
+    ],
+    "never": [
+      "Put private files, uploaded images or the database into the code repository.",
+      "Commit real slips, receipts or any personal financial data, even as test samples.",
+      "Send images anywhere other than the Claude service. The exchange rate service only receives a date and a currency code.",
+      "Save an AI-read record without your confirmation.",
+      "Delete or skip failing tests to make the checks pass.",
+      "Put the app online without the login in place and tested.",
+      "Run more than one copy of the app against the database."
+    ],
+    "src": "sample/SPEC_sample.md > Boundaries"
+  },
+  "decisions": [
+    {
+      "text": "All totals and charts are in THB. Other currencies are converted with a rate from a free service, which you can override.",
+      "src": "sample/SPEC_sample.md > Decisions (resolved 2026-10-14)"
+    },
+    {
+      "text": "Dates are shown in the Western calendar. Thai Buddhist years on slips are converted when the slip is read.",
+      "src": "sample/SPEC_sample.md > Decisions (resolved 2026-10-14)"
+    },
+    {
+      "text": "Phase 1 has no login and runs on your home network only. Phase 2 adds a single-password login because the app becomes public.",
+      "src": "sample/SPEC_sample.md > Decisions (resolved 2026-10-14)"
+    },
+    {
+      "text": "Phase 1 runs on your PC. Phase 2 puts the app on your Railway account with the database on a storage volume.",
+      "src": "sample/SPEC_sample.md > Decisions (resolved 2026-10-14)"
+    },
+    {
+      "text": "A receipt becomes one record with the total amount only.",
+      "src": "sample/SPEC_sample.md > Decisions (resolved 2026-10-14)"
+    },
+    {
+      "text": "Backup is a manual export button (CSV).",
+      "src": "sample/SPEC_sample.md > Decisions (resolved 2026-10-14)"
+    },
+    {
+      "text": "Phase 2 login is a single password kept for 30 days. No Google sign-in and no two-step verification.",
+      "src": "sample/SPEC_sample.md > Decisions (resolved 2026-10-14)"
+    },
+    {
+      "text": "Phase 2 uses the free Railway web address, not a custom domain.",
+      "src": "sample/SPEC_sample.md > Decisions (resolved 2026-10-14)"
+    },
+    {
+      "text": "Saving changes goes through its own entry points, so it can be tested without the screens and reused when the app goes online.",
+      "src": "sample/plan_sample.md > Architecture Decisions"
+    },
+    {
+      "text": "Each kind of record has one set of checking rules, shared by the form, the saving step and the AI answer reader.",
+      "src": "sample/plan_sample.md > Architecture Decisions"
+    },
+    {
+      "text": "Money is stored as whole numbers of the smallest coin and rates as exact decimal text. The THB amount comes from one function that rounds half up.",
+      "src": "sample/plan_sample.md > Architecture Decisions"
+    },
+    {
+      "text": "All file locations come from one setting, so going online only changes a setting.",
+      "src": "sample/plan_sample.md > Architecture Decisions"
+    },
+    {
+      "text": "The AI reading step sits behind one function. Tests use a stand-in, and only a manual command calls the real AI.",
+      "src": "sample/plan_sample.md > Architecture Decisions"
+    },
+    {
+      "text": "Claude is asked for its answer in a fixed format, and any field it leaves out is flagged for you to fill in.",
+      "src": "sample/plan_sample.md > Architecture Decisions"
+    },
+    {
+      "text": "Dates are stored as Western-calendar dates. Thai Buddhist years are converted only when a slip is read.",
+      "src": "sample/plan_sample.md > Architecture Decisions"
+    },
+    {
+      "text": "Filters live in the web address, so the list, dashboard and export share them and links can be bookmarked.",
+      "src": "sample/plan_sample.md > Architecture Decisions"
+    },
+    {
+      "text": "Colours and text sizes are set once in Task 5 and reused everywhere, which avoids a restyle at the end.",
+      "src": "sample/plan_sample.md > Architecture Decisions"
+    },
+    {
+      "text": "You add real slips and bills to a private folder that is not uploaded: 3 to 5 before Task 2 and about 10 by Checkpoint D.",
+      "src": "sample/plan_sample.md > Decisions"
+    },
+    {
+      "text": "You already have an API key and paste it into the private settings file at Task 2. The price per image is checked before the first paid run.",
+      "src": "sample/plan_sample.md > Decisions"
+    }
+  ],
+  "out_of_scope": [
+    {
+      "text": "Several users or accounts",
+      "src": "sample/SPEC_sample.md > Out of scope for v1"
+    },
+    {
+      "text": "Login in Phase 1 (Phase 2 adds a single-user login)",
+      "src": "sample/SPEC_sample.md > Out of scope for v1"
+    },
+    {
+      "text": "Splitting a receipt into separate items",
+      "src": "sample/SPEC_sample.md > Out of scope for v1"
+    },
+    {
+      "text": "Direct bank connections, or importing bank statements",
+      "src": "sample/SPEC_sample.md > Out of scope for v1"
+    },
+    {
+      "text": "Budgets, alerts and repeating transactions",
+      "src": "sample/SPEC_sample.md > Out of scope for v1"
+    },
+    {
+      "text": "Automatic backups (export is the only backup)",
+      "src": "sample/SPEC_sample.md > Out of scope for v1"
+    },
+    {
+      "text": "Showing dates in the Buddhist calendar",
+      "src": "sample/SPEC_sample.md > Out of scope for v1"
+    },
+    {
+      "text": "Hosting anywhere other than Railway, running several copies, or a separate database server",
+      "src": "sample/SPEC_sample.md > Out of scope for v1"
+    }
+  ],
+  "success": [
+    {
+      "text": "From a phone on your home network, you can photograph a bill and save a correct record in under 30 seconds, including the review.",
+      "phase": "Phase 1",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "On 10 sample slips and bills (Thai and English), the AI gets amount, currency and date right in at least 9, and suggests a sensible category in at least 8. Mistakes can be fixed in the review form.",
+      "phase": "Phase 1",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "Adding, changing and deleting records and categories all work, and the data is still there after a restart.",
+      "phase": "Phase 1",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "The dashboard totals in THB match a hand calculation on test data, including records in other currencies.",
+      "phase": "Phase 1",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "A Thai slip dated in the Buddhist calendar is saved and shown with the correct Western date.",
+      "phase": "Phase 1",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "The CSV export opens in Excel with Thai text intact, and the THB amounts match the dashboard.",
+      "phase": "Phase 1",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "All automatic checks pass and at least 80% of the core code is covered by tests.",
+      "phase": "Phase 1",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "No secrets or personal data appear anywhere in the code history.",
+      "phase": "Phase 1",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "The app is live on a secure Railway address, and you can photograph a bill on mobile data and save it.",
+      "phase": "Phase 2",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "Without logging in, every page, data request and image address sends you to the login page or is refused. This is tested automatically and by hand on the live address.",
+      "phase": "Phase 2",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "Records and images survive a redeploy and a restart.",
+      "phase": "Phase 2",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "Moved data matches your local copy (same record count and dashboard totals).",
+      "phase": "Phase 2",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    },
+    {
+      "text": "No secrets appear in the code, build logs or the pages sent to the browser. The AI key is only read on the server.",
+      "phase": "Phase 2",
+      "src": "sample/SPEC_sample.md > Success Criteria"
+    }
+  ],
+  "notes": [
+    {
+      "title": "The build plan in short",
+      "text": [
+        "Build the full single-user billing app on your PC. Records can be added by hand or read from a photo of a slip or bill by Claude. Every record is converted to THB, and the app shows totals and charts, with a CSV export.",
+        "The work is sliced so each task delivers something you can see working. The riskiest unknown, how well Claude reads Thai slips, is tested in Task 2 before the app is built around it.",
+        "This plan covers Phase 1 only. Phase 2 (Railway) gets its own plan after Phase 1 passes."
+      ],
+      "src": "sample/plan_sample.md > Overview"
+    },
+    {
+      "title": "How the AI will build it",
+      "text": [
+        "One AI agent works on one task at a time, in order. Tasks share files and one database layout, so working in parallel would cause conflicts.",
+        "After each task the checks run, the behaviour is confirmed by running it, and the work is saved with nothing sensitive included.",
+        "Review helpers look at the code at each checkpoint. A security review runs at Checkpoint D and at the end, and a test review runs at the end of Phase 1.",
+        "The AI stops and asks you first before real Claude calls, a new tool, a database change after the first version, or anything that makes the app reachable beyond your home network."
+      ],
+      "src": "sample/plan_sample.md > How to Build"
+    },
+    {
+      "title": "Delivery in two phases",
+      "text": [
+        "The work ships in two phases. Phase 2 starts only after Phase 1 meets its success criteria."
+      ],
+      "src": "sample/SPEC_sample.md > Delivery Phases"
+    },
+    {
+      "title": "Phase 1: run it on your PC",
+      "text": [
+        "Every feature in this summary is built and runs on your PC, with phone access over your home network.",
+        "There is no login. Your data lives in a folder on your PC.",
+        "Phase 1 is done when its eight success criteria pass."
+      ],
+      "src": "sample/SPEC_sample.md > Phase 1: Local"
+    },
+    {
+      "title": "Phase 2: put it online",
+      "text": [
+        "The same app is put on your Railway account as a public web app with a secure address, so it works from your phone anywhere.",
+        "A login is added, and the app must not go public without it. Your data lives on a Railway storage volume.",
+        "No features change beyond what going online needs: the login, settings kept outside the code, a health check and moving your existing data.",
+        "Phase 2 is done when its five success criteria pass."
+      ],
+      "src": "sample/SPEC_sample.md > Phase 2: Deploy to Railway"
+    },
+    {
+      "title": "How you use it in Phase 1",
+      "text": [
+        "The app runs on your PC. To use the phone camera, the phone opens the app over your home network.",
+        "There is no login in this phase, so anyone on your home network can open it. Using it from outside your home is not part of this version.",
+        "The internet is needed for AI reading and exchange rates. Adding THB records by hand works offline."
+      ],
+      "src": "sample/SPEC_sample.md > Runtime and access (Phase 1)"
+    },
+    {
+      "title": "Going online in Phase 2",
+      "text": [
+        "Railway is a hosting service. It builds the app from your code on GitHub, gives it a secure web address and keeps a storage volume, so your records and images survive updates.",
+        "One small service runs the app, with exactly one copy. The login is a single password that you set, with a 30-day sign-in, a limit on repeated wrong passwords and a logout button.",
+        "A one-time script moves your Phase 1 data to Railway, and the record counts and totals must match afterwards. The CSV export stays the main backup.",
+        "Railway charges by usage. You confirm the expected cost before anything is deployed."
+      ],
+      "src": "sample/SPEC_sample.md > Phase 2 Deployment (Railway)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "P1",
+      "title": "Phase A: Foundation",
+      "tasks": [
+        {
+          "id": "T1",
+          "title": "Set up the project and tools",
+          "you_will_see": "A blank starter page opens on your PC, and the first database check passes.",
+          "src": "sample/todo_sample.md > Task 1: Scaffold project and tooling"
+        },
+        {
+          "id": "T2",
+          "title": "Test how well Claude reads a slip",
+          "you_will_see": "On 3 to 5 of your sample slips, the app prints the amount, currency and date it read. You review how well it did.",
+          "src": "sample/todo_sample.md > Task 2: Extraction spike (Claude reads a slip)"
+        },
+        {
+          "id": "T3",
+          "title": "Create the database and ready-made categories",
+          "you_will_see": "An empty database with 13 ready-made categories. Setting it up twice still gives 13.",
+          "src": "sample/todo_sample.md > Task 3: Database schema, migrations and category seed"
+        }
+      ],
+      "src": "sample/plan_sample.md > Phase A: Foundation"
+    },
+    {
+      "id": "P2",
+      "title": "Phase B: Records",
+      "tasks": [
+        {
+          "id": "T4",
+          "title": "Build the money and input-checking rules",
+          "you_will_see": "Nothing on screen yet. The rules for amounts and for checking input are proven by automatic tests.",
+          "src": "sample/todo_sample.md > Task 4: Money and validation utilities"
+        },
+        {
+          "id": "T5",
+          "title": "Add a record by hand and see it in the list",
+          "you_will_see": "You add income or spending and it appears at the top of the list. Bad input shows messages and saves nothing.",
+          "src": "sample/todo_sample.md > Task 5: Add a THB record by hand and see it in the list"
+        },
+        {
+          "id": "T6",
+          "title": "Edit and delete a record",
+          "you_will_see": "You can change any field, and delete a record after a confirmation.",
+          "src": "sample/todo_sample.md > Task 6: Edit and delete a record"
+        },
+        {
+          "id": "T7",
+          "title": "Manage categories",
+          "you_will_see": "You can add, rename and remove categories. Removing one that is in use asks where to move its records.",
+          "src": "sample/todo_sample.md > Task 7: Manage categories"
+        },
+        {
+          "id": "T8",
+          "title": "Records in other currencies",
+          "you_will_see": "A USD record gets an exchange rate automatically, which you can change. If the lookup fails, you are asked for a rate.",
+          "src": "sample/todo_sample.md > Task 8: Foreign-currency records with automatic THB rate"
+        }
+      ],
+      "src": "sample/plan_sample.md > Phase B: Records"
+    },
+    {
+      "id": "P3",
+      "title": "Phase C: Insights",
+      "tasks": [
+        {
+          "id": "T9",
+          "title": "Dashboard totals",
+          "you_will_see": "A dashboard shows total income, total spending and the difference for a period you choose.",
+          "src": "sample/todo_sample.md > Task 9: Dashboard totals for a period"
+        },
+        {
+          "id": "T10",
+          "title": "Charts",
+          "you_will_see": "A ring chart of spending by category and a bar chart of income against spending for the last 6 months.",
+          "src": "sample/todo_sample.md > Task 10: Category donut and monthly bar charts"
+        },
+        {
+          "id": "T11",
+          "title": "Filters",
+          "you_will_see": "Filters for date range, category, direction and currency change the list, totals and charts together.",
+          "src": "sample/todo_sample.md > Task 11: Filters for list and dashboard"
+        }
+      ],
+      "src": "sample/plan_sample.md > Phase C: Insights"
+    },
+    {
+      "id": "P4",
+      "title": "Phase D: Capture",
+      "tasks": [
+        {
+          "id": "T12",
+          "title": "Upload or photograph an image",
+          "you_will_see": "You can upload or photograph an image. Files that are too big or are not images are refused with a clear message.",
+          "src": "sample/todo_sample.md > Task 12: Upload or photograph an image and store it"
+        },
+        {
+          "id": "T13",
+          "title": "Read, review and save a record from an image",
+          "you_will_see": "You upload a slip and a pre-filled form opens for review. Nothing is saved until you confirm.",
+          "src": "sample/todo_sample.md > Task 13: Extract, review and save a record from an image"
+        },
+        {
+          "id": "T14",
+          "title": "Duplicate warning",
+          "you_will_see": "Saving the same slip a second time shows a warning.",
+          "src": "sample/todo_sample.md > Task 14: Duplicate warning"
+        }
+      ],
+      "src": "sample/plan_sample.md > Phase D: Capture"
+    },
+    {
+      "id": "P5",
+      "title": "Phase E: Finish",
+      "tasks": [
+        {
+          "id": "T15",
+          "title": "Export to a spreadsheet file",
+          "you_will_see": "An Export button downloads your records as a file that opens in Excel with Thai text intact.",
+          "src": "sample/todo_sample.md > Task 15: CSV export"
+        },
+        {
+          "id": "T16",
+          "title": "Polish the design and states",
+          "you_will_see": "Every screen has a designed empty, loading and error state, and works with the keyboard. You sign off on the look.",
+          "src": "sample/todo_sample.md > Task 16: Design, empty, loading and error states, plus accessibility pass"
+        },
+        {
+          "id": "T17",
+          "title": "Full test run and phone check",
+          "you_will_see": "The full automatic test suite passes, a phone test over your home Wi-Fi works, and a README explains setup.",
+          "src": "sample/todo_sample.md > Task 17: Full E2E suite, phone-over-LAN check and coverage"
+        }
+      ],
+      "src": "sample/plan_sample.md > Phase E: Finish"
+    }
+  ],
+  "checkpoints": [
+    {
+      "title": "Checkpoint A",
+      "phase": "Phase A: Foundation",
+      "items": [
+        "The automatic checks and the build pass.",
+        "You review the results of the reading test (can Claude read Thai slips?) and decide: go on, or change the approach."
+      ],
+      "src": "sample/plan_sample.md > Checkpoint A"
+    },
+    {
+      "title": "Checkpoint B",
+      "phase": "Phase B: Records",
+      "items": [
+        "Adding, changing and deleting by hand works from start to finish, and data survives a restart.",
+        "You review the look of the list and the form."
+      ],
+      "src": "sample/plan_sample.md > Checkpoint B"
+    },
+    {
+      "title": "Checkpoint C",
+      "phase": "Phase C: Insights",
+      "items": [
+        "The dashboard totals match a hand calculation on test data (success criterion 4)."
+      ],
+      "src": "sample/plan_sample.md > Checkpoint C"
+    },
+    {
+      "title": "Checkpoint D",
+      "phase": "Phase D: Capture",
+      "items": [
+        "A real reading run on 10 sample slips and bills, with your approval for the cost (success criterion 2).",
+        "A slip dated in the Thai Buddhist calendar saves with the correct Western date (success criterion 5)."
+      ],
+      "src": "sample/plan_sample.md > Checkpoint D"
+    },
+    {
+      "title": "Phase 1 complete",
+      "phase": "Phase E: Finish",
+      "items": [
+        "All eight Phase 1 success criteria pass.",
+        "You approve. Then Phase 2 (Railway) gets its own plan."
+      ],
+      "src": "sample/plan_sample.md > Checkpoint: Phase 1 complete"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "Claude may misread Thai slips (amount, Buddhist-calendar date, income or spending).",
+      "impact": "High",
+      "handling": "Test on real slips before building around it. You always review before saving, and the instructions to Claude are tuned during that test.",
+      "src": "sample/plan_sample.md > Risks and Mitigations"
+    },
+    {
+      "risk": "iPhone HEIC photos may not be readable by the image tool.",
+      "impact": "Med",
+      "handling": "iPhones usually convert to JPEG on upload. A real file is tested in Task 12. If that fails, a new tool is added after asking you.",
+      "src": "sample/plan_sample.md > Risks and Mitigations"
+    },
+    {
+      "risk": "The database tool may not install on Node 24 and Windows.",
+      "impact": "Med",
+      "handling": "It is installed and tried first in Task 1. Fallback: use Node 22.",
+      "src": "sample/plan_sample.md > Risks and Mitigations"
+    },
+    {
+      "risk": "The exchange rate service may lack a currency or a weekend date.",
+      "impact": "Low",
+      "handling": "Weekend dates use the previous working day's rate. An unsupported currency asks you to type a rate.",
+      "src": "sample/plan_sample.md > Risks and Mitigations"
+    },
+    {
+      "risk": "Windows Firewall may block your phone from reaching the app.",
+      "impact": "Low",
+      "handling": "The README will describe the firewall rule.",
+      "src": "sample/plan_sample.md > Risks and Mitigations"
+    },
+    {
+      "risk": "Repeated real AI reading runs could cost money.",
+      "impact": "Low",
+      "handling": "Real calls happen only through one manual command, each time with your approval. Automatic tests use a stand-in.",
+      "src": "sample/plan_sample.md > Risks and Mitigations"
+    },
+    {
+      "risk": "Real slips could leak into the public code repository.",
+      "impact": "High",
+      "handling": "Real samples stay in a folder the repository ignores, test samples are made up, and staged changes are checked before every upload.",
+      "src": "sample/plan_sample.md > Risks and Mitigations"
+    }
+  ]
+}

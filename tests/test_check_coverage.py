@@ -176,3 +176,18 @@ def test_cli_rejects_missing_input_and_bad_arguments(tmp_path):
     assert missing.returncode == 1
     assert "nope.md" in missing.stderr
     assert run_cli().returncode == 1
+
+
+def test_criteria_src_counts_as_a_use_of_that_heading(tmp_path):
+    spec = tmp_path / "SPEC.md"
+    spec.write_text("# S\n\n## User stories\n1. a\n\n## Acceptance criteria\nx\n", encoding="utf-8")
+    path = str(spec)
+    story = {
+        "id": "S1",
+        "src": f"{path} > User stories",
+        "criteria_src": f"{path} > Acceptance criteria",
+    }
+    summary = {"sources": [{"path": path}], "skipped": [], "stories": [story]}
+    assert coverage.check(summary, [path]) == []
+    story["criteria_src"] = f"{path} > Nope"
+    assert any("stories[0].criteria_src" in e for e in coverage.check(summary, [path]))

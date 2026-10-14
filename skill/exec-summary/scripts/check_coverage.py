@@ -58,7 +58,7 @@ def _find_src(value: object, path: str):
     if isinstance(value, dict):
         for key, child in value.items():
             child_path = f"{path}.{key}" if path else key
-            if key == "src" and isinstance(child, str):
+            if (key == "src" or key.endswith("_src")) and isinstance(child, str):
                 yield child_path, child
             else:
                 yield from _find_src(child, child_path)

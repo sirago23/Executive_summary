@@ -639,3 +639,27 @@ def test_plan_validation(data, edit, message):
     with pytest.raises(render.InvalidSummary) as exc:
         render.render_deck(data)
     assert message in str(exc.value)
+
+
+# --- Task 9 prerequisites: optional "so", criteria_src --------------------------------------
+
+
+def test_a_story_without_so_reads_as_a_plain_sentence(data):
+    del data["stories"][0]["so"]
+    html = render.render_deck(data)
+    assert (
+        "I want to upload a bank slip image and get a filled-in record I can confirm in one click."
+        in html
+    )
+    assert "so that None" not in html
+
+
+def test_criteria_rows_use_criteria_src_when_given(data):
+    data["stories"][0]["criteria"] = ["It works."]
+    data["stories"][0]["criteria_src"] = "SPEC.md > Acceptance criteria"
+    html = render.render_deck(data)
+    assert '<td class="src">SPEC.md &gt; Acceptance criteria</td>' in html
+    data["stories"][0]["criteria_src"] = "OTHER.md > Acceptance criteria"
+    with pytest.raises(render.InvalidSummary) as exc:
+        render.render_deck(data)
+    assert "stories[0].criteria_src" in str(exc.value)

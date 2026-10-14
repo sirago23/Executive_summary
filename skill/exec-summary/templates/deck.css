@@ -301,6 +301,10 @@ td.src {
   margin: 0;
 }
 
+table + h3 {
+  margin-top: calc(var(--gap) * 1.5);
+}
+
 td ul {
   margin: 0;
   padding-left: 1.2em;

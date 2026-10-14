@@ -67,7 +67,7 @@ T1 Scaffold
 - [x] Task 6: Diagram slides
 - [x] Task 7: Screen slides
 - [x] Task 8: Plan slides
-- [ ] Task 9: Sample fixtures render both decks
+- [x] Task 9: Sample fixtures render both decks
 
 ### Checkpoint B
 - [ ] Both sample decks render, and validate and coverage pass on them

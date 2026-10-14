@@ -101,8 +101,9 @@ def render_goal(data: dict) -> list[Slide]:
 
 def story_sentence(story: dict) -> str:
     want = story["want"].strip().rstrip(".")
-    so = story["so"].strip().rstrip(".")
-    return f"As {esc(story['as'].strip())}, I want {esc(want)}, so that {esc(so)}."
+    so = story.get("so", "").strip().rstrip(".")
+    ending = f", so that {esc(so)}" if so else ""
+    return f"As {esc(story['as'].strip())}, I want {esc(want)}{ending}."
 
 
 def render_stories(data: dict) -> list[Slide]:
@@ -158,7 +159,7 @@ def table_slides(
 
 def render_criteria(data: dict) -> list[Slide]:
     rows = [
-        ([f"{esc(s['id'])}: {esc(s['want'])}", esc(criterion)], s["src"])
+        ([f"{esc(s['id'])}: {esc(s['want'])}", esc(criterion)], s.get("criteria_src", s["src"]))
         for s in data.get("stories", [])
         for criterion in s.get("criteria", [])
     ]

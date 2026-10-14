@@ -164,7 +164,7 @@ Standard checks used below:
 **Files:** `summary.schema.json`, `S/render.py`, `deck.css`, `tests/test_render.py`
 **Scope:** M
 
-### - [ ] Task 9: Sample fixtures render both decks
+### - [x] Task 9: Sample fixtures render both decks
 
 **Description:** Write the two hand-checked fixtures from the samples, following the spec's plain-language rules: `tests/fixtures/billing/spec.json` (spec only) and `tests/fixtures/billing/full.json` (spec, plan and todo). Add `tests/test_sample.py`, which validates, checks coverage and renders both, and writes the decks to `.tmp/sample/`.
 
