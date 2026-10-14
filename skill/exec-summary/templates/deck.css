@@ -1,0 +1,279 @@
+:root {
+  --bg: #f6f6f3;
+  --surface: #ffffff;
+  --text: #1d1d1b;
+  --muted: #5a5a55;
+  --line: #d9d9d2;
+  --accent: #2c5a88;
+  --accent-text: #ffffff;
+  --fs-title: clamp(1.5rem, 1rem + 2vw, 2.25rem);
+  --fs-body: 1.0625rem;
+  --fs-small: 0.875rem;
+  --gap: 16px;
+  --radius: 6px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131315;
+    --surface: #1c1c1f;
+    --text: #ececea;
+    --muted: #a6a6a0;
+    --line: #35353b;
+    --accent: #8fb6e3;
+    --accent-text: #101012;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #131315;
+  --surface: #1c1c1f;
+  --text: #ececea;
+  --muted: #a6a6a0;
+  --line: #35353b;
+  --accent: #8fb6e3;
+  --accent-text: #101012;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  margin: 0 0 var(--gap);
+}
+
+h1,
+h2 {
+  font-size: var(--fs-title);
+}
+
+h3 {
+  font-size: var(--fs-body);
+}
+
+p {
+  margin: 0 0 var(--gap);
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px var(--gap);
+  padding: 10px var(--gap);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-small);
+}
+
+.bar .count {
+  color: var(--muted);
+}
+
+.bar .nav {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  font: inherit;
+  font-size: var(--fs-small);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+.toc {
+  position: relative;
+}
+
+.toc summary {
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.toc ol {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 6;
+  margin: 4px 0 0;
+  padding: 8px 8px 8px 32px;
+  width: min(320px, calc(100vw - 2 * var(--gap)));
+  max-height: 70vh;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.toc a {
+  display: block;
+  padding: 4px 0;
+  color: var(--accent);
+}
+
+#deck {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px var(--gap) 64px;
+}
+
+.slide {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px var(--gap);
+  margin-bottom: var(--gap);
+}
+
+.js .slide:not(.active) {
+  display: none;
+}
+
+.src {
+  margin: var(--gap) 0 0;
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+.tagline {
+  color: var(--muted);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap);
+}
+
+@media (min-width: 720px) {
+  .slide {
+    padding: 32px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--gap);
+}
+
+.card .id {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.card p {
+  margin-bottom: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-small);
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--line) 25%, transparent);
+}
+
+.checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.checks li {
+  padding: 6px 0;
+}
+
+.checks label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.checks input {
+  width: 20px;
+  height: 20px;
+  margin-top: 3px;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+@media print {
+  .bar {
+    display: none;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  #deck {
+    max-width: none;
+    padding: 0;
+  }
+
+  .js .slide:not(.active),
+  .slide {
+    display: block;
+    border: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+}

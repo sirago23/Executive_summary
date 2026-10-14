@@ -55,7 +55,7 @@ T1 Scaffold
 ### Phase A: First deck
 - [x] Task 1: Scaffold the repo and tooling
 - [x] Task 2: `outline.py` reads any Markdown file's structure
-- [ ] Task 3: First deck from a hand-written summary.json
+- [x] Task 3: First deck from a hand-written summary.json
 
 ### Checkpoint A
 - [ ] `CHECKS` pass

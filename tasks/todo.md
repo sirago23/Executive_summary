@@ -53,7 +53,7 @@ Standard checks used below:
 **Files:** `S/outline.py`, `tests/test_outline.py`
 **Scope:** M
 
-### - [ ] Task 3: First deck from a hand-written summary.json
+### - [x] Task 3: First deck from a hand-written summary.json
 
 **Description:** The first full vertical slice. Write the core of `summary.schema.json` (`project`, `sources`, `skipped`, `goal`, `stories`, `open_questions`), `validate.py` with the JSON Schema subset validator and the "every `src` names a listed source" rule, `paths.py` (output name from input names, `--out`), and `render.py` with the template, design tokens (light and dark), contents list, arrow-key navigation and slides 1 (title, files covered), 2 (goal), 3 (stories) and 18 (please check, checkboxes in localStorage with try/catch). Add a small hand-written `tests/fixtures/minimal.json`.
 

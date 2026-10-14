@@ -1,0 +1,38 @@
+{
+  "project": {
+    "name": "Billing Record",
+    "tagline": "Record income and expenses from a photo of a bank slip or bill.",
+    "status": "Draft, awaiting approval",
+    "date": "14 Oct 2026"
+  },
+  "sources": [
+    { "path": "SPEC.md", "modified": "2026-10-14", "found": ["goal", "stories"] }
+  ],
+  "skipped": [
+    { "src": "SPEC.md > Code Style", "reason": "Code conventions, not useful to the owner." }
+  ],
+  "goal": {
+    "text": [
+      "A personal web app for one person to keep track of money coming in and going out.",
+      "You photograph a bill or upload a bank slip, check what the app read from it, and save it."
+    ],
+    "src": "SPEC.md > Objective"
+  },
+  "stories": [
+    {
+      "id": "S1",
+      "as": "the owner",
+      "want": "to upload a bank slip image and get a filled-in record I can confirm in one click",
+      "so": "I do not have to type the details",
+      "src": "SPEC.md > User stories"
+    },
+    {
+      "id": "S2",
+      "as": "the owner",
+      "want": "to export all my records to a CSV file",
+      "so": "I have a backup I can open in Excel",
+      "src": "SPEC.md > User stories"
+    }
+  ],
+  "open_questions": ["Which currencies do you use besides Thai baht?"]
+}

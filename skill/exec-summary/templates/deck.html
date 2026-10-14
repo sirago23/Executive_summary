@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$title</title>
+<style>
+$css
+</style>
+</head>
+<body>
+<header class="bar">
+  <details class="toc">
+    <summary>Contents</summary>
+    <ol>
+$toc
+    </ol>
+  </details>
+  <span class="count" id="count" aria-live="polite"></span>
+  <div class="nav">
+    <button type="button" id="prev">Previous</button>
+    <button type="button" id="next">Next</button>
+    <button type="button" id="theme" aria-label="Switch between light and dark">Theme</button>
+  </div>
+</header>
+<main id="deck">
+$slides
+</main>
+<script>
+$js
+</script>
+</body>
+</html>
