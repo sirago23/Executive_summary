@@ -53,7 +53,7 @@ T1 Scaffold
 ## Task List
 
 ### Phase A: First deck
-- [ ] Task 1: Scaffold the repo and tooling
+- [x] Task 1: Scaffold the repo and tooling
 - [ ] Task 2: `outline.py` reads any Markdown file's structure
 - [ ] Task 3: First deck from a hand-written summary.json
 

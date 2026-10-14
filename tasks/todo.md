@@ -19,7 +19,7 @@ Standard checks used below:
 
 ## Phase A: First deck
 
-### - [ ] Task 1: Scaffold the repo and tooling
+### - [x] Task 1: Scaffold the repo and tooling
 
 **Description:** Create the folder layout from the spec's Project Structure, `pyproject.toml` (pytest settings, ruff with `target-version = "py310"`, coverage settings for `S`), `requirements-dev.txt` (pytest, pytest-cov, ruff, pinned), and `.gitignore` (`.tmp/`, `session-handoff/`, `.env*`, `__pycache__/`, `.pytest_cache/`, `.coverage`, `docs/exec-summary/` in this repo). Ask before installing the dev tools.
 
