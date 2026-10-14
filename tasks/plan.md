@@ -22,7 +22,7 @@ Work is sliced vertically. Task 3 produces a real (small) deck in the browser fr
 - **Design tokens are set once in Task 3** (colors for light and dark, type scale, spacing) and reused by every later slide.
 - **Output naming and `links.json` live in one module** (`paths.py`), used by `render.py` and by the skill's publish step, so the naming rule exists once.
 - **`outline.py` is format-aware, not name-aware.** It reports Markdown structure only (headings with level and line, list items, checkboxes, `Task N` headings, tables). Deciding what a section means is Claude's job in `SKILL.md`.
-- **`coverage.py` uses the outline**, not its own parser, so both scripts agree on what a heading is.
+- **`check_coverage.py` uses the outline**, not its own parser, so both scripts agree on what a heading is.
 - **Commit after every task** that passes its verification, with lint and tests green.
 
 ## Dependency Graph
@@ -31,7 +31,7 @@ Work is sliced vertically. Task 3 produces a real (small) deck in the browser fr
 T1 Scaffold
  └── T2 outline.py
       └── T3 First deck: schema core + validate + render (title, goal, stories, please check)
-           ├── T4 coverage.py
+           ├── T4 check_coverage.py
            ├── T5 Table slides (criteria, data, stack, rules, decisions, success, other notes)
            ├── T6 Diagram slides (mermaid.py, architecture, flow)
            ├── T7 Screen slides (wireframe.py, design images)
@@ -62,7 +62,7 @@ T1 Scaffold
 - [ ] User opens the first deck and reviews the look, before more slides are built on it
 
 ### Phase B: All slides
-- [ ] Task 4: `coverage.py`
+- [x] Task 4: `check_coverage.py`
 - [ ] Task 5: Table slides
 - [ ] Task 6: Diagram slides
 - [ ] Task 7: Screen slides
@@ -93,10 +93,10 @@ T1 Scaffold
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Claude's plain-language text drifts from the source or invents facts | High | Every item needs a `src` that `coverage.py` checks against the outline. `SKILL.md` and `writing-guide.md` require "Example" labels on anything inferred. The owner can check each source reference. |
+| Claude's plain-language text drifts from the source or invents facts | High | Every item needs a `src` that `check_coverage.py` checks against the outline. `SKILL.md` and `writing-guide.md` require "Example" labels on anything inferred. The owner can check each source reference. |
 | Mermaid fails to draw in the Artifact (load blocked, layout error) | Med | Diagrams are generated from nodes and edges, never hand-written. Every diagram has a table fallback that shows if Mermaid fails to load or throws. Checked in the Artifact in Task 11. |
 | Heading detection differs between files (numbering, bold text, setext headings) | Med | `outline.py` handles ATX headings and ignores headings inside code blocks. Tests use both samples and renamed copies. Setext headings are rare in agent-skills files and are out of scope unless a real file needs them. |
-| `coverage.py` is too strict and blocks real runs on harmless sections | Med | Skipping a section with a reason is always allowed. The 3-attempt fix loop in `SKILL.md` reports the remaining errors instead of looping. |
+| `check_coverage.py` is too strict and blocks real runs on harmless sections | Med | Skipping a section with a reason is always allowed. The 3-attempt fix loop in `SKILL.md` reports the remaining errors instead of looping. |
 | Long sections overflow a slide | Low | Tables split after about 8 rows onto continuation slides. Text fields have `maxLength` in the schema. |
 | Personal data from a source file ends up in a published deck | Med | `SKILL.md` forbids it. The deck is a private Artifact. The publish step shows the user the deck path before publishing. |
 | Python 3.14 features used that break on 3.10 | Low | ruff `target-version = "py310"`. No newer syntax in `skill/`. |

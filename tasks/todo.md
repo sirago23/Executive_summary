@@ -79,9 +79,9 @@ Standard checks used below:
 
 ## Phase B: All slides
 
-### - [ ] Task 4: `coverage.py`
+### - [x] Task 4: `check_coverage.py`
 
-**Description:** Write `coverage.py <summary.json> <file> [<file> ...]`. It runs the outline on the inputs and checks that every heading (level 2 and deeper) is either the heading part of some `src` or listed in `skipped` with a non-empty reason; that every `src` names a real file and heading from the inputs; and that the counts of user stories, task headings and checkpoint headings in the inputs are matched in `summary.json`.
+**Description:** Write `check_coverage.py <summary.json> <file> [<file> ...]`. It runs the outline on the inputs and checks that every heading (level 2 and deeper) is either the heading part of some `src` or listed in `skipped` with a non-empty reason; that every `src` names a real file and heading from the inputs; and that the counts of user stories, task headings and checkpoint headings in the inputs are matched in `summary.json`.
 
 **Acceptance criteria:**
 - [ ] Passes on `minimal.json` with its matching input.
@@ -90,10 +90,10 @@ Standard checks used below:
 - [ ] Fails on a `src` with an unknown file or heading.
 
 **Verification:**
-- [ ] `CHECKS` pass. `tests/test_coverage.py`.
+- [ ] `CHECKS` pass. `tests/test_check_coverage.py`.
 
 **Dependencies:** Task 3
-**Files:** `S/coverage.py`, `tests/test_coverage.py`
+**Files:** `S/check_coverage.py`, `tests/test_check_coverage.py`
 **Scope:** M
 
 ### - [ ] Task 5: Table slides

@@ -67,7 +67,7 @@ The output is one self-contained `.html` file, published as a private Claude Art
   3. Claude reads the files and the outline, and writes .tmp/exec-summary/summary.json
                                                          (plain English, a source on every item, skipped sections with reasons)
   4. scripts/validate.py   summary.json                  (shape and required fields)
-  5. scripts/coverage.py   summary.json <files>          (every heading used or skipped, nothing dropped)
+  5. scripts/check_coverage.py   summary.json <files>          (every heading used or skipped, nothing dropped)
   6. scripts/render.py     summary.json -> docs/exec-summary/<name>.html
   7. Claude publishes the HTML as a private Artifact and saves the URL in links.json
 ```
@@ -96,7 +96,7 @@ If step 3 or 4 fails, Claude fixes `summary.json` and runs the scripts again, at
 Install skill:  python tools/install.py            # copy skill/exec-summary to ~/.claude/skills/exec-summary
 Outline:        python skill/exec-summary/scripts/outline.py <file> [<file> ...]
 Validate:       python skill/exec-summary/scripts/validate.py <summary.json>
-Coverage:       python skill/exec-summary/scripts/coverage.py <summary.json> <file> [<file> ...]
+Coverage:       python skill/exec-summary/scripts/check_coverage.py <summary.json> <file> [<file> ...]
 Render:         python skill/exec-summary/scripts/render.py <summary.json> [--out <out.html>]
 Tests:          python -m pytest
 Lint:           ruff check .
@@ -116,7 +116,7 @@ skill/exec-summary/          # The skill. This folder is what gets installed.
   scripts/
     outline.py               # Markdown structure of each input file (headings, lists, checkboxes) as JSON
     validate.py              # Shape and required-field checks
-    coverage.py              # Every input heading used or skipped; stories, tasks, checkpoints all present
+    check_coverage.py              # Every input heading used or skipped; stories, tasks, checkpoints all present
     render.py                # summary.json -> one HTML file
     mermaid.py               # Node/edge data -> Mermaid text, with label escaping
     wireframe.py             # Screen description -> HTML wireframe
@@ -126,7 +126,7 @@ tools/
   install.py                 # Copies the skill into ~/.claude/skills
 tests/
   fixtures/billing/          # Hand-checked summary.json files for the samples (spec only; spec + plan + todo)
-  test_validate.py, test_coverage.py, test_mermaid.py, test_wireframe.py, test_render.py, test_sample.py
+  test_validate.py, test_check_coverage.py, test_mermaid.py, test_wireframe.py, test_render.py, test_sample.py
 sample/                      # Sample inputs (Billing Record project): SPEC_sample.md, plan_sample.md, todo_sample.md
 .tmp/                        # Scratch output (gitignored)
 ```
@@ -226,7 +226,7 @@ def to_flowchart(nodes: list[dict], edges: list[dict], direction: str = "LR") ->
 - **Unit (pytest):**
   - `validate.py`: a valid file passes; missing required fields, wrong types, unknown block types, edges that point to missing nodes and diagrams over the node limit fail with clear messages.
   - `outline.py`: finds headings, list items, checkboxes and task headings in each sample file, and works whatever the file is named (tests copy the samples to other names).
-  - `coverage.py`: passes when every heading is used or skipped; fails, naming the heading, when a section is neither; finds 7 user stories in the spec sample and 17 tasks and 5 checkpoints in the todo sample, and fails when one is missing from `summary.json`. A `src` that names a file or heading not in the inputs fails.
+  - `check_coverage.py`: passes when every heading is used or skipped; fails, naming the heading, when a section is neither; finds 7 user stories in the spec sample and 17 tasks and 5 checkpoints in the todo sample, and fails when one is missing from `summary.json`. A `src` that names a file or heading not in the inputs fails.
   - `mermaid.py`: quotes, new lines, brackets and `<script>` in labels are escaped; output parses as a valid flowchart header and node/edge lines.
   - `wireframe.py`: each block type renders; unknown types are rejected.
   - `render.py`: every slide type renders; an absent section drops its slide with no warning; the output name follows the input names, and `--out` overrides it; HTML special characters in any field are escaped.
@@ -243,7 +243,7 @@ def to_flowchart(nodes: list[dict], edges: list[dict], direction: str = "LR") ->
 **Always**
 - Use only the files the user named. Take every fact from them and attach its source reference.
 - Label anything inferred (wireframes, simplified diagrams) as "Example".
-- Run `validate.py` and `coverage.py` before rendering, and render only when both pass.
+- Run `validate.py` and `check_coverage.py` before rendering, and render only when both pass.
 - Publish as a private Artifact and reuse the saved URL on re-runs.
 - Run lint and tests before every commit in this repo.
 
@@ -263,7 +263,7 @@ def to_flowchart(nodes: list[dict], edges: list[dict], direction: str = "LR") ->
 ## Success Criteria
 
 1. `/exec-summary sample/SPEC_sample.md` produces a published Artifact link in one run, with no manual fixes to `summary.json`, and the deck has no phase or task slides.
-2. `/exec-summary sample/SPEC_sample.md sample/plan_sample.md sample/todo_sample.md` produces a separate link whose deck contains all 7 user stories with their acceptance criteria, all 5 phases, all 17 tasks and all checkpoints. `coverage.py` passes.
+2. `/exec-summary sample/SPEC_sample.md sample/plan_sample.md sample/todo_sample.md` produces a separate link whose deck contains all 7 user stories with their acceptance criteria, all 5 phases, all 17 tasks and all checkpoints. `check_coverage.py` passes.
 3. The architecture diagram and the flow chart draw without errors in the Artifact.
 4. At least 2 wireframes appear, each labelled as an example.
 5. The owner reads the full sample deck and says they understand what the app does, how it will be built and what they need to approve, without asking what a technical term means.
