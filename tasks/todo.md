@@ -71,9 +71,9 @@ Standard checks used below:
 **Files:** `skill/exec-summary/schema/summary.schema.json`, `S/validate.py`, `S/paths.py`, `S/render.py`, `skill/exec-summary/templates/deck.html`, `deck.css`, `deck.js`, `tests/fixtures/minimal.json`, tests
 **Scope:** M
 
-### - [ ] Checkpoint A
-- [ ] `CHECKS` pass
-- [ ] User reviews the look of the first deck. Changes to tokens and layout happen now, before more slides use them.
+### - [x] Checkpoint A
+- [x] `CHECKS` pass
+- [x] User reviews the look of the first deck. Changes to tokens and layout happen now, before more slides use them.
 
 ---
 
@@ -181,10 +181,10 @@ Standard checks used below:
 **Files:** `tests/fixtures/billing/spec.json`, `tests/fixtures/billing/full.json`, `tests/test_sample.py`
 **Scope:** M
 
-### - [ ] Checkpoint B
-- [ ] `CHECKS` pass
-- [ ] User reviews both sample decks
-- [ ] `agent-skills:code-reviewer` and `agent-skills:security-auditor` run, and findings are fixed or logged
+### - [x] Checkpoint B
+- [x] `CHECKS` pass
+- [x] User reviews both sample decks
+- [x] `agent-skills:code-reviewer` and `agent-skills:security-auditor` run, and findings are fixed or logged
 
 ---
 

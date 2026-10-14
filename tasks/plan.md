@@ -58,8 +58,8 @@ T1 Scaffold
 - [x] Task 3: First deck from a hand-written summary.json
 
 ### Checkpoint A
-- [ ] `CHECKS` pass
-- [ ] User opens the first deck and reviews the look, before more slides are built on it
+- [x] `CHECKS` pass
+- [x] User opens the first deck and reviews the look, before more slides are built on it
 
 ### Phase B: All slides
 - [x] Task 4: `check_coverage.py`
@@ -70,9 +70,9 @@ T1 Scaffold
 - [x] Task 9: Sample fixtures render both decks
 
 ### Checkpoint B
-- [ ] Both sample decks render, and validate and coverage pass on them
-- [ ] User reviews both sample decks in a browser
-- [ ] Code review and security review done, findings fixed or logged
+- [x] Both sample decks render, and validate and coverage pass on them
+- [x] User reviews both sample decks in a browser
+- [x] Code review and security review done, findings fixed or logged
 
 ### Phase C: The skill
 - [ ] Task 10: SKILL.md, references and install
