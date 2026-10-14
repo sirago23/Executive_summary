@@ -64,7 +64,7 @@ T1 Scaffold
 ### Phase B: All slides
 - [x] Task 4: `check_coverage.py`
 - [x] Task 5: Table slides
-- [ ] Task 6: Diagram slides
+- [x] Task 6: Diagram slides
 - [ ] Task 7: Screen slides
 - [ ] Task 8: Plan slides
 - [ ] Task 9: Sample fixtures render both decks

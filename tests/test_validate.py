@@ -116,3 +116,63 @@ def test_validate_does_not_modify_input(data):
     before = copy.deepcopy(data)
     validate.validate(data)
     assert data == before
+
+
+# --- Task 6: diagrams -----------------------------------------------------------------------
+
+
+def diagram(**changes) -> dict:
+    base = {
+        "id": "arch",
+        "kind": "architecture",
+        "title": "How it fits together",
+        "nodes": [{"id": "app", "label": "The app"}, {"id": "db", "label": "Your records"}],
+        "edges": [{"from": "app", "to": "db", "label": "saves"}],
+        "src": "SPEC.md > Tech Stack",
+    }
+    base.update(changes)
+    return base
+
+
+def test_valid_diagram_passes(data):
+    data["diagrams"] = [diagram()]
+    assert validate.validate(data) == []
+
+
+def test_edge_to_a_missing_node_fails_with_its_path(data):
+    data["diagrams"] = [diagram(edges=[{"from": "app", "to": "ghost"}])]
+    errors = validate.validate(data)
+    assert 'diagrams[0].edges[0].to: no node with id "ghost"' in errors
+
+
+def test_edge_from_a_missing_node_fails(data):
+    data["diagrams"] = [diagram(edges=[{"from": "ghost", "to": "db"}])]
+    assert 'diagrams[0].edges[0].from: no node with id "ghost"' in validate.validate(data)
+
+
+def test_thirteen_nodes_fail_and_twelve_pass(data):
+    twelve = [{"id": f"n{i}", "label": "x"} for i in range(12)]
+    data["diagrams"] = [diagram(nodes=twelve, edges=[])]
+    assert validate.validate(data) == []
+    data["diagrams"] = [diagram(nodes=[*twelve, {"id": "n12", "label": "x"}], edges=[])]
+    assert "diagrams[0].nodes: has more than 12 items" in validate.validate(data)
+
+
+@pytest.mark.parametrize("bad", ["a-b", "a b", "a;b", "é", ""])
+def test_node_ids_are_letters_digits_and_underscore_only(data, bad):
+    data["diagrams"] = [diagram(nodes=[{"id": bad, "label": "x"}], edges=[])]
+    errors = validate.validate(data)
+    assert any(e.startswith("diagrams[0].nodes[0].id") for e in errors)
+
+
+def test_duplicate_node_ids_fail(data):
+    nodes = [{"id": "a", "label": "x"}, {"id": "a", "label": "y"}]
+    data["diagrams"] = [diagram(nodes=nodes, edges=[])]
+    assert 'diagrams[0].nodes[1].id: duplicate node id "a"' in validate.validate(data)
+
+
+def test_unknown_kind_and_unlisted_src_fail(data):
+    data["diagrams"] = [diagram(kind="sketch", src="OTHER.md > A")]
+    errors = validate.validate(data)
+    assert any(e.startswith("diagrams[0].kind: must be one of") for e in errors)
+    assert any(e.startswith("diagrams[0].src") for e in errors)

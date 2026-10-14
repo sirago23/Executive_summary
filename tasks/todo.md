@@ -113,7 +113,7 @@ Standard checks used below:
 **Files:** `summary.schema.json`, `S/render.py`, `deck.css`, `tests/test_render.py`
 **Scope:** M
 
-### - [ ] Task 6: Diagram slides
+### - [x] Task 6: Diagram slides
 
 **Description:** Write `mermaid.py` (`escape_label`, `to_flowchart` with node groups as subgraphs). Add `diagrams` to the schema (at most 12 nodes, edges must reference existing nodes) and slides 6 (architecture) and 7 (flow). Load Mermaid from the pinned jsdelivr URL. If Mermaid fails to load or throws, show a nodes-and-edges table in place of the diagram.
 

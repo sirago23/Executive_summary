@@ -16,12 +16,18 @@ from html import escape
 from pathlib import Path
 from string import Template
 
+from mermaid import to_flowchart
 from paths import output_path
 from validate import validate
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
 STORIES_PER_SLIDE = 6
 ROWS_PER_SLIDE = 8
+MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
+MERMAID_SRI = "sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I"
+MERMAID_TAG = (
+    f'<script src="{MERMAID_URL}" integrity="{MERMAID_SRI}" crossorigin="anonymous" defer></script>'
+)
 
 Slide = tuple[str, str, str]  # (id, title in the contents list, inner HTML)
 
@@ -145,6 +151,47 @@ def render_criteria(data: dict) -> list[Slide]:
     return table_slides("criteria", "How we will know it works", ["Story", "It works when"], rows)
 
 
+def diagram_fallback(diagram: dict) -> str:
+    """Nodes and edges as plain HTML, shown when Mermaid cannot load or draw."""
+    labels = {n["id"]: n["label"] for n in diagram["nodes"]}
+    rows = "".join(
+        f"<tr><td>{esc(labels[e['from']])}</td><td>{esc(labels[e['to']])}</td>"
+        f"<td>{esc(e.get('label', ''))}</td></tr>"
+        for e in diagram["edges"]
+    )
+    parts = esc(", ".join(labels.values()))
+    return (
+        '<div class="diagram-fallback" hidden>'
+        "<p>The picture could not be drawn here. The same information as a list:</p>"
+        f"<p>Parts: {parts}</p>"
+        "<table><thead><tr><th>From</th><th>To</th><th>What happens</th></tr></thead>"
+        f"<tbody>{rows}</tbody></table></div>"
+    )
+
+
+def diagram_slides(data: dict, kind: str, slide_id: str) -> list[Slide]:
+    slides = []
+    shown = [d for d in data.get("diagrams", []) if d["kind"] == kind]
+    for page, diagram in enumerate(shown, start=1):
+        id_suffix, _ = suffix(page)
+        mermaid_text = to_flowchart(diagram["nodes"], diagram["edges"])
+        body = (
+            f"<h2>{esc(diagram['title'])}</h2>"
+            f'<div class="diagram"><pre class="mermaid">{esc(mermaid_text)}</pre>'
+            f"{diagram_fallback(diagram)}</div>{src_note(diagram['src'])}"
+        )
+        slides.append((f"{slide_id}{id_suffix}", diagram["title"], body))
+    return slides
+
+
+def render_architecture(data: dict) -> list[Slide]:
+    return diagram_slides(data, "architecture", "architecture")
+
+
+def render_flow(data: dict) -> list[Slide]:
+    return diagram_slides(data, "flow", "flow")
+
+
 def render_data(data: dict) -> list[Slide]:
     rows = [
         ([esc(d["name"]), esc(d["plain"]), esc(", ".join(d.get("fields", [])))], d["src"])
@@ -248,6 +295,8 @@ SLIDE_BUILDERS = [
     render_goal,
     render_stories,
     render_criteria,
+    render_architecture,
+    render_flow,
     render_data,
     render_stack,
     render_rules,
@@ -282,6 +331,7 @@ def render_deck(data: dict) -> str:
         title=esc(data["project"]["name"]),
         css=(TEMPLATE_DIR / "deck.css").read_text(encoding="utf-8"),
         js=(TEMPLATE_DIR / "deck.js").read_text(encoding="utf-8"),
+        mermaid=MERMAID_TAG if data.get("diagrams") else "",
         toc=toc,
         slides=sections,
     )

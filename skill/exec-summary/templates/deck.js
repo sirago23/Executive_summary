@@ -101,6 +101,7 @@
     root.setAttribute("data-theme", next);
     write(themeKey, next);
     syncSwitch();
+    drawDiagrams();
   });
   if (systemQuery && systemQuery.addEventListener) {
     systemQuery.addEventListener("change", syncSwitch);
@@ -115,5 +116,59 @@
     });
   });
 
+  var drawCount = 0;
+
+  function showFallback(box) {
+    box.querySelector(".mermaid").hidden = true;
+    box.querySelector(".diagram-fallback").hidden = false;
+  }
+
+  function drawDiagram(box, theme) {
+    var pre = box.querySelector(".mermaid");
+    if (pre.definition === undefined) {
+      pre.definition = pre.textContent;
+    }
+    drawCount += 1;
+    var id = "diagram-" + drawCount;
+    window.mermaid
+      .render(id, pre.definition)
+      .then(function (result) {
+        pre.innerHTML = result.svg;
+      })
+      .catch(function () {
+        var leftover = document.getElementById("d" + id);
+        if (leftover) {
+          leftover.remove();
+        }
+        showFallback(box);
+      });
+  }
+
+  /* Mermaid draws off screen, so diagrams on hidden slides and in print are drawn too. */
+  function drawDiagrams() {
+    var boxes = document.querySelectorAll(".diagram");
+    if (!boxes.length) {
+      return;
+    }
+    var theme = isDark() ? "dark" : "default";
+    Array.prototype.forEach.call(boxes, function (box) {
+      if (!window.mermaid) {
+        showFallback(box);
+        return;
+      }
+      try {
+        window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: theme });
+        drawDiagram(box, theme);
+      } catch (e) {
+        showFallback(box);
+      }
+    });
+  }
+
+  if (document.readyState === "complete") {
+    drawDiagrams();
+  } else {
+    window.addEventListener("load", drawDiagrams);
+  }
   showFromHash();
 })();

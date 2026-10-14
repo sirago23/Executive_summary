@@ -3,6 +3,7 @@ import json
 import re
 import subprocess
 import sys
+from html import unescape
 from pathlib import Path
 
 import pytest
@@ -280,3 +281,88 @@ def test_validation_catches_bad_table_data(data, path, value, message):
     with pytest.raises(render.InvalidSummary) as exc:
         render.render_deck(data)
     assert message in str(exc.value)
+
+
+# --- Task 6: diagram slides -----------------------------------------------------------------
+
+MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
+
+
+def with_diagrams(data: dict) -> dict:
+    data["diagrams"] = [
+        {
+            "id": "arch",
+            "kind": "architecture",
+            "title": "How it fits together",
+            "nodes": [
+                {"id": "app", "label": "The app", "group": "Your computer"},
+                {"id": "db", "label": "Your records", "group": "Your computer"},
+            ],
+            "edges": [{"from": "app", "to": "db", "label": "saves"}],
+            "src": SRC,
+        },
+        {
+            "id": "flow",
+            "kind": "flow",
+            "title": "Adding a record",
+            "nodes": [{"id": "up", "label": "Upload a photo"}, {"id": "ok", "label": "Confirm"}],
+            "edges": [{"from": "up", "to": "ok"}],
+            "src": SRC,
+        },
+    ]
+    return data
+
+
+def test_diagram_slides_come_after_screens_and_before_data(data):
+    with_tables(data)
+    with_diagrams(data)
+    ids = slide_ids(render.render_deck(data))
+    assert ids.index("architecture") < ids.index("flow") < ids.index("data")
+    assert ids.index("criteria") < ids.index("architecture")
+
+
+def test_diagram_is_drawn_from_nodes_and_edges_never_raw_mermaid(data):
+    html = render.render_deck(with_diagrams(data))
+    assert '<pre class="mermaid">flowchart TB' in html
+    assert "subgraph g_1" in html
+    assert 'n_app -->|"saves"| n_db' in unescape(html)
+
+
+def test_every_diagram_has_a_table_fallback(data):
+    html = render.render_deck(with_diagrams(data))
+    assert html.count('class="diagram-fallback" hidden') == 2
+    assert "<th>From</th><th>To</th>" in html
+    assert "Upload a photo" in html and "saves" in html
+
+
+def test_mermaid_loads_only_from_the_pinned_url_and_only_with_diagrams(data):
+    assert "mermaid@" not in render.render_deck(data)
+    html = render.render_deck(with_diagrams(data))
+    assert html.count(MERMAID_URL) == 1
+    assert 'integrity="sha384-' in html
+    assert re.findall(r'<script[^>]+src="([^"]+)"', html) == [MERMAID_URL]
+
+
+def test_two_architecture_diagrams_get_numbered_slides(data):
+    with_diagrams(data)
+    data["diagrams"].append(dict(data["diagrams"][0], id="arch2", title="Second"))
+    ids = slide_ids(render.render_deck(data))
+    assert ids.count("architecture") == 1 and "architecture-2" in ids
+
+
+def test_diagram_text_is_escaped_in_html_and_mermaid(data):
+    evil = '<script>alert(1)</script> "q"'
+    with_diagrams(data)
+    d = data["diagrams"][0]
+    d["title"] = evil
+    d["nodes"][0]["label"] = evil
+    d["nodes"][0]["group"] = evil
+    d["edges"][0]["label"] = evil
+    html = render.render_deck(data)
+    assert "<script>alert(1)" not in html
+    assert "#lt;script#gt;" in html
+
+
+def test_diagrams_are_dropped_when_absent(data):
+    ids = slide_ids(render.render_deck(data))
+    assert "architecture" not in ids and "flow" not in ids

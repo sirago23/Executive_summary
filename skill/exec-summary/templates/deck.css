@@ -258,6 +258,25 @@ td.src {
   padding-left: 1.2em;
 }
 
+.diagram .mermaid {
+  margin: 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.diagram .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+html:not(.js) .diagram .mermaid {
+  display: none;
+}
+
+html:not(.js) .diagram-fallback[hidden] {
+  display: block;
+}
+
 .tagline {
   color: var(--muted);
 }
