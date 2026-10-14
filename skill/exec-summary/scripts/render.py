@@ -226,6 +226,7 @@ def diagram_slides(data: dict, kind: str, slide_id: str) -> list[Slide]:
         body = (
             f"<h2>{esc(diagram['title'])}</h2>"
             f'<div class="diagram"><pre class="mermaid">{esc(mermaid_text)}</pre>'
+            '<div class="mermaid-print" aria-hidden="true"></div>'
             f"{diagram_fallback(diagram)}</div>{src_note(diagram['src'])}"
         )
         slides.append((f"{slide_id}{id_suffix}", diagram["title"], body))

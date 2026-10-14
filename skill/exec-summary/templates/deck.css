@@ -503,8 +503,17 @@ td ul {
   height: auto;
 }
 
-html:not(.js) .diagram .mermaid {
+html:not(.js) .diagram .mermaid,
+.js .diagram:not([data-state]) .mermaid,
+.js .diagram[data-state="failed"] .mermaid,
+.diagram .mermaid-print {
   display: none;
+}
+
+.js .diagram:not([data-state])::before {
+  content: "Drawing the diagram...";
+  display: block;
+  color: var(--muted);
 }
 
 html:not(.js) .diagram-fallback[hidden] {
@@ -594,6 +603,51 @@ tbody tr:nth-child(even) {
 }
 
 @media print {
+  /* Print is always light, whatever theme the screen is in. */
+  :root,
+  :root[data-theme="dark"],
+  :root:not([data-theme="light"]) {
+    --bg: #fff;
+    --surface: #fff;
+    --text: #000;
+    --muted: #444;
+    --line: #bbb;
+    --accent: #1f4a75;
+    --accent-text: #fff;
+  }
+
+  .impact-high,
+  :root[data-theme="dark"] .impact-high,
+  :root:not([data-theme="light"]) .impact-high {
+    color: #b3261e;
+  }
+
+  .impact-med,
+  :root[data-theme="dark"] .impact-med,
+  :root:not([data-theme="light"]) .impact-med {
+    color: #8a5a00;
+  }
+
+  .impact-low,
+  :root[data-theme="dark"] .impact-low,
+  :root:not([data-theme="light"]) .impact-low {
+    color: #2d6a3a;
+  }
+
+  .diagram .mermaid {
+    display: none !important;
+  }
+
+  .diagram[data-state="drawn"] .mermaid-print {
+    display: block;
+    text-align: center;
+  }
+
+  .mermaid-print svg {
+    max-width: 100%;
+    height: auto;
+  }
+
   .bar {
     display: none;
   }

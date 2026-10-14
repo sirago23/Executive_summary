@@ -1,4 +1,5 @@
 import copy
+import itertools
 import json
 import re
 import subprocess
@@ -8,6 +9,7 @@ from pathlib import Path
 
 import pytest
 import render
+import validate
 
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURE = ROOT / "tests" / "fixtures" / "minimal.json"
@@ -779,3 +781,69 @@ def test_criteria_rows_use_criteria_src_when_given(data):
     with pytest.raises(render.InvalidSummary) as exc:
         render.render_deck(data)
     assert "stories[0].criteria_src" in str(exc.value)
+
+
+# --- review fixes: check slide, hostile input everywhere, print copy ---------------------------
+
+
+def test_check_slide_lists_each_checkpoint_with_what_to_approve(data):
+    html = render.render_deck(with_plan(data))
+    check = html.split('id="s-check"')[1]
+    assert "Checkpoint A: Review the look." in check
+
+
+def test_tick_keys_are_scoped_to_the_deck_and_survive_reordering(data):
+    pattern = r'data-key="([^"]+)"><span>([^<]+)</span>'
+    data["open_questions"] = ["First?", "Second?"]
+    first = {text: key for key, text in re.findall(pattern, render.render_deck(data))}
+    data["open_questions"] = ["Second?", "First?"]
+    again = {text: key for key, text in re.findall(pattern, render.render_deck(data))}
+    assert again == first
+    data["sources"].append({"path": "tasks/plan.md"})
+    other = re.findall(r'data-key="([^"]+)"', render.render_deck(data))
+    assert other and not set(other) & set(first.values())
+
+
+def test_each_diagram_has_a_light_copy_for_printing(data):
+    html = render.render_deck(with_diagrams(data))
+    assert html.count('<div class="mermaid-print" aria-hidden="true"></div>') == 2
+
+
+def test_the_only_external_script_is_the_pinned_mermaid_tag(data):
+    html = render.render_deck(with_diagrams(data))
+    assert re.findall(r'<script[^>]+src="([^"]+)"', html) == [MERMAID_URL]
+    assert 'src="http' not in html.replace(MERMAID_URL, "")
+    assert "<link" not in html
+
+
+UNIQUE = itertools.count()
+EVIL = "<script>alert(1)</script><img src=x onerror=y> & \" '"
+KEEP = {"src", "criteria_src", "path", "kind", "type", "impact", "from", "to", "modified", "date"}
+
+
+def make_hostile(value, key=None, parent=None):
+    """Copy of `value` with every free-text string replaced by EVIL."""
+    if isinstance(value, dict):
+        return {k: make_hostile(v, k, value) for k, v in value.items()}
+    if isinstance(value, list):
+        return [make_hostile(v, key, parent) for v in value]
+    if isinstance(value, str) and key not in KEEP:
+        if key == "id":  # ids are short, and node ids must stay plain
+            return value if parent is not None and "label" in parent else f'<b>{next(UNIQUE)}</b>&"'
+        return EVIL
+    return value
+
+
+def test_hostile_text_in_every_field_is_escaped(data):
+    with_tables(data)
+    with_diagrams(data)
+    with_screens(data)
+    with_plan(data)
+    data["open_questions"] = ["Which?"]
+    hostile = make_hostile(data)
+    assert validate.validate(hostile) == []
+    html = render.render_deck(hostile)
+    assert "<script>alert(1)" not in html
+    assert "<img src=x" not in html
+    assert html.count("&lt;script&gt;alert(1)&lt;/script&gt;") > 20
+    assert len(re.findall(r"<script", html)) == 2  # the pinned Mermaid tag and deck.js

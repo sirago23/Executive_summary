@@ -92,9 +92,9 @@ def test_full_deck_has_everything_the_spec_asks_for():
     ids = set(slide_ids(html))
     assert {"phases", "tasks", "checkpoints", "risks", "architecture", "flow"} <= ids
     for phase in data["phases"]:
-        assert phase["title"] in html
+        assert render.esc(phase["title"]) in html
         for task in phase["tasks"]:
-            assert task["title"] in html
+            assert render.esc(task["title"]) in html
     assert html.count("Example layout, not the final design") >= 2
 
 
@@ -104,6 +104,23 @@ def test_full_deck_lists_all_three_files_on_the_title_slide():
         assert path in html
 
 
-def test_decks_keep_other_notes_for_sections_that_fit_no_slide():
-    data = load("spec")
+def test_decks_show_other_notes_for_sections_that_fit_no_slide():
+    data, html = build("spec")
     assert any("Runtime and access" in n["src"] for n in data["notes"])
+    for note in data["notes"]:
+        assert render.esc(note["title"]) in html
+        for line in note["text"]:
+            assert render.esc(line) in html
+
+
+def test_full_deck_check_slide_lists_every_checkpoint():
+    data, html = build("full")
+    check = html.split('id="s-check"')[1]
+    for checkpoint in data["checkpoints"]:
+        assert render.esc(checkpoint["title"]) in check
+
+
+def test_spec_only_and_full_decks_do_not_share_tick_keys():
+    spec_keys = set(re.findall(r'data-key="([^"]+)"', build("spec")[1]))
+    full_keys = set(re.findall(r'data-key="([^"]+)"', build("full")[1]))
+    assert spec_keys and full_keys and not spec_keys & full_keys

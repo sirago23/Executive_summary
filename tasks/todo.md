@@ -192,7 +192,7 @@ Standard checks used below:
 
 ### - [ ] Task 10: SKILL.md, references and install
 
-**Description:** Write `SKILL.md` (name `exec-summary`, a description that triggers on "/exec-summary" and "executive summary of <files>", and the steps from the spec's How It Works, including the no-paths case and the 3-attempt fix loop). Write `references/writing-guide.md` (plain-language rules, a jargon glossary seeded from the samples, the "Example" label rule, no personal data) and `references/summary-format.md` (field guide with a short example). Write `tools/install.py`, which copies `skill/exec-summary` to `~/.claude/skills/exec-summary` and replaces an older copy only after showing what will change. Add `links.json` read and write to `paths.py`.
+**Description:** Write `SKILL.md` (name `exec-summary`, a description that triggers on "/exec-summary" and "executive summary of <files>", and the steps from the spec's How It Works, including the no-paths case and the 3-attempt fix loop). Write `references/writing-guide.md` (plain-language rules, a jargon glossary seeded from the samples, the "Example" label rule, no personal data) and `references/summary-format.md` (field guide with a short example). Write `tools/install.py`, which copies `skill/exec-summary` to `~/.claude/skills/exec-summary` and replaces an older copy only after showing what will change. Add `links.json` read and write to `paths.py`. `SKILL.md` must also carry the notes at the end of `tasks/checkpoint-b-review.md` (limits of the coverage check, path spelling, asking before using design images).
 
 **Acceptance criteria:**
 - [ ] `SKILL.md` names every script with its exact command and says when to stop and ask.

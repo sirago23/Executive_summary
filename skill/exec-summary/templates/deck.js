@@ -104,7 +104,10 @@
     drawDiagrams();
   });
   if (systemQuery && systemQuery.addEventListener) {
-    systemQuery.addEventListener("change", syncSwitch);
+    systemQuery.addEventListener("change", function () {
+      syncSwitch();
+      drawDiagrams();
+    });
   }
   syncSwitch();
 
@@ -117,34 +120,53 @@
   });
 
   var drawCount = 0;
+  var DRAW_TIMEOUT = 8000;
 
-  function showFallback(box) {
-    box.querySelector(".mermaid").hidden = true;
-    box.querySelector(".diagram-fallback").hidden = false;
+  /* A diagram box is "drawn" (picture shown) or "failed" (table of nodes and edges shown). With
+     no state yet, a short "Drawing" text shows instead of the raw definition. */
+  function setState(box, state) {
+    box.setAttribute("data-state", state);
+    box.querySelector(".diagram-fallback").hidden = state !== "failed";
   }
 
-  function drawDiagram(box, theme) {
-    var pre = box.querySelector(".mermaid");
-    if (pre.definition === undefined) {
-      pre.definition = pre.textContent;
-    }
+  function renderSvg(definition, theme) {
     drawCount += 1;
     var id = "diagram-" + drawCount;
-    window.mermaid
-      .render(id, pre.definition)
-      .then(function (result) {
-        pre.innerHTML = result.svg;
-      })
-      .catch(function () {
+    /* The theme travels with each definition, so overlapping draws cannot mix themes up. */
+    var text = '%%{init: {"theme": "' + theme + '"}}%%\n' + definition;
+    return window.mermaid.render(id, text).then(
+      function (result) {
+        return result.svg;
+      },
+      function (error) {
         var leftover = document.getElementById("d" + id);
         if (leftover) {
           leftover.remove();
         }
-        showFallback(box);
+        throw error;
+      }
+    );
+  }
+
+  /* Mermaid draws off screen, so diagrams on hidden slides are drawn too. Each diagram is drawn
+     twice: once in the current theme for the screen, once light for printing. */
+  function drawDiagram(box, theme) {
+    var pre = box.querySelector(".mermaid");
+    var printed = box.querySelector(".mermaid-print");
+    if (pre.definition === undefined) {
+      pre.definition = pre.textContent;
+    }
+    Promise.all([renderSvg(pre.definition, theme), renderSvg(pre.definition, "default")])
+      .then(function (svgs) {
+        pre.innerHTML = svgs[0];
+        printed.innerHTML = svgs[1];
+        setState(box, "drawn");
+      })
+      .catch(function () {
+        setState(box, "failed");
       });
   }
 
-  /* Mermaid draws off screen, so diagrams on hidden slides and in print are drawn too. */
   function drawDiagrams() {
     var boxes = document.querySelectorAll(".diagram");
     if (!boxes.length) {
@@ -153,22 +175,28 @@
     var theme = isDark() ? "dark" : "default";
     Array.prototype.forEach.call(boxes, function (box) {
       if (!window.mermaid) {
-        showFallback(box);
+        setState(box, "failed");
         return;
       }
       try {
-        window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: theme });
+        window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });
         drawDiagram(box, theme);
       } catch (e) {
-        showFallback(box);
+        setState(box, "failed");
       }
     });
   }
+
+  /* If Mermaid is slow to load, show the table. A later successful draw replaces it. */
+  window.setTimeout(function () {
+    Array.prototype.forEach.call(document.querySelectorAll(".diagram:not([data-state])"), function (box) {
+      setState(box, "failed");
+    });
+  }, DRAW_TIMEOUT);
 
   if (document.readyState === "complete") {
     drawDiagrams();
   } else {
     window.addEventListener("load", drawDiagrams);
-  }
-  showFromHash();
+  }  showFromHash();
 })();
