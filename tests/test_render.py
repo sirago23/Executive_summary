@@ -81,6 +81,13 @@ def test_deck_is_one_self_contained_file(data):
     assert "<style>" in html and "<script>" in html
 
 
+def test_dark_mode_is_a_labelled_switch(data):
+    html = render.render_deck(data)
+    assert 'role="switch"' in html
+    assert 'aria-checked="false"' in html
+    assert "Dark mode" in html
+
+
 def test_invalid_data_is_refused(data):
     del data["project"]
     with pytest.raises(render.InvalidSummary) as exc:

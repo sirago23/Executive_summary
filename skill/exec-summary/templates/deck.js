@@ -84,14 +84,28 @@
   if (savedTheme === "light" || savedTheme === "dark") {
     root.setAttribute("data-theme", savedTheme);
   }
-  document.getElementById("theme").addEventListener("click", function () {
+  var themeSwitch = document.getElementById("theme");
+  var systemQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+  function isDark() {
     var explicit = root.getAttribute("data-theme");
-    var systemDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    var isDark = explicit ? explicit === "dark" : systemDark;
-    var next = isDark ? "light" : "dark";
+    return explicit ? explicit === "dark" : !!(systemQuery && systemQuery.matches);
+  }
+
+  function syncSwitch() {
+    themeSwitch.setAttribute("aria-checked", isDark() ? "true" : "false");
+  }
+
+  themeSwitch.addEventListener("click", function () {
+    var next = isDark() ? "light" : "dark";
     root.setAttribute("data-theme", next);
     write(themeKey, next);
+    syncSwitch();
   });
+  if (systemQuery && systemQuery.addEventListener) {
+    systemQuery.addEventListener("change", syncSwitch);
+  }
+  syncSwitch();
 
   var boxes = document.querySelectorAll("input[data-key]");
   Array.prototype.forEach.call(boxes, function (box) {
