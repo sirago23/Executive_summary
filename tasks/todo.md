@@ -35,7 +35,7 @@ Standard checks used below:
 **Files:** `pyproject.toml`, `requirements-dev.txt`, `.gitignore`, `tests/test_placeholder.py`, `skill/exec-summary/` (empty folders with `.gitkeep`)
 **Scope:** S
 
-### - [ ] Task 2: `outline.py` reads any Markdown file's structure
+### - [x] Task 2: `outline.py` reads any Markdown file's structure
 
 **Description:** Write `outline.py <file> [<file> ...]`. For each file it prints JSON with the path as given, last-modified date, and a list of sections: heading text, level, line, and counts and texts of list items, numbered items, checkboxes (checked or not) and tables. It flags `Task N:` headings and headings that contain "Checkpoint". Headings inside fenced code blocks are ignored. Missing paths and non-`.md`/`.txt` files exit 1 with the path named.
 
