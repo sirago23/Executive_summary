@@ -137,3 +137,146 @@ def test_render_does_not_modify_input(data):
     before = copy.deepcopy(data)
     render.render_deck(data)
     assert data == before
+
+
+# --- Task 5: table slides -------------------------------------------------------------------
+
+
+SRC = "SPEC.md > User stories"
+
+
+def with_tables(data: dict) -> dict:
+    data["stories"][0]["criteria"] = ["The record is saved.", "The total matches the slip."]
+    data["stories"][1]["criteria"] = ["The CSV opens in Excel."]
+    data["data"] = [
+        {
+            "name": "Record",
+            "plain": "One income or expense.",
+            "fields": ["date", "amount"],
+            "src": SRC,
+        }
+    ]
+    data["stack"] = [
+        {"part": "Storage", "choice": "SQLite", "plain": "A database in one file.", "src": SRC}
+    ]
+    data["rules"] = {
+        "always": ["Run the tests."],
+        "ask_first": ["Add a package."],
+        "never": ["Delete a record without asking."],
+        "src": SRC,
+    }
+    data["decisions"] = [{"text": "One user only.", "src": SRC}]
+    data["out_of_scope"] = [{"text": "Multiple currencies.", "src": SRC}]
+    data["success"] = [{"text": "A record takes under 30 seconds.", "phase": "Phase 1", "src": SRC}]
+    data["notes"] = [{"title": "Backups", "text": ["Copy the file weekly."], "src": SRC}]
+    return data
+
+
+def test_table_slides_render_in_catalog_order(data):
+    html = render.render_deck(with_tables(data))
+    assert slide_ids(html) == [
+        "title",
+        "goal",
+        "stories",
+        "criteria",
+        "data",
+        "stack",
+        "rules",
+        "decisions",
+        "out-of-scope",
+        "success",
+        "notes",
+        "check",
+    ]
+
+
+def test_each_table_slide_shows_its_content_and_source(data):
+    html = render.render_deck(with_tables(data))
+    for text in [
+        "The total matches the slip.",
+        "One income or expense.",
+        "A database in one file.",
+        "Run the tests.",
+        "Add a package.",
+        "Delete a record without asking.",
+        "One user only.",
+        "Multiple currencies.",
+        "A record takes under 30 seconds.",
+        "Copy the file weekly.",
+    ]:
+        assert text in html
+    assert (
+        html.count("Source: SPEC.md &gt; User stories")
+        + html.count('<td class="src">SPEC.md &gt; User stories')
+        >= 9
+    )
+
+
+def test_table_slides_are_dropped_when_their_section_is_absent(data):
+    html = render.render_deck(data)
+    for sid in ["criteria", "data", "stack", "rules", "decisions", "out-of-scope", "success"]:
+        assert sid not in slide_ids(html)
+    assert "notes" not in slide_ids(html)
+
+
+def test_a_story_without_criteria_adds_no_criteria_row(data):
+    data["stories"][0]["criteria"] = ["Only one."]
+    html = render.render_deck(data)
+    assert slide_ids(html).count("criteria") == 1
+    assert html.count("Only one.") == 1
+
+
+def test_twenty_rows_split_into_three_slides_with_continued_titles(data):
+    data["stories"][0]["criteria"] = [f"Criterion {i}" for i in range(20)]
+    html = render.render_deck(data)
+    ids = slide_ids(html)
+    assert [i for i in ids if i.startswith("criteria")] == ["criteria", "criteria-2", "criteria-3"]
+    assert html.count("(continued)") >= 2
+    assert "Criterion 19" in html
+
+
+def test_notes_get_one_slide_each(data):
+    data["notes"] = [
+        {"title": "First", "text": ["a"], "src": SRC},
+        {"title": "Second", "text": ["b"], "src": SRC},
+    ]
+    ids = slide_ids(render.render_deck(data))
+    assert ids[-3:] == ["notes", "notes-2", "check"]
+
+
+def test_table_fields_are_escaped(data):
+    evil = "<script>alert(1)</script>"
+    with_tables(data)
+    data["stack"][0]["plain"] = evil
+    data["rules"]["never"] = [evil]
+    data["out_of_scope"][0]["text"] = evil
+    data["notes"][0]["title"] = evil
+    data["stories"][0]["criteria"] = [evil]
+    html = render.render_deck(data)
+    assert "<script>alert(1)" not in html
+    assert html.count("&lt;script&gt;alert(1)&lt;/script&gt;") >= 5
+
+
+@pytest.mark.parametrize(
+    ("path", "value", "message"),
+    [
+        ("stack.0.plain", None, "stack[0].plain: missing required field"),
+        ("rules.extra", "x", "rules.extra: unknown field"),
+        ("out_of_scope.0.src", "OTHER.md > A", "out_of_scope[0].src"),
+        ("success.0.text", 5, "success[0].text: expected string, got integer"),
+    ],
+)
+def test_validation_catches_bad_table_data(data, path, value, message):
+    with_tables(data)
+    keys = path.split(".")
+    target = data
+    for key in keys[:-1]:
+        target = target[int(key)] if key.isdigit() else target[key]
+    last = int(keys[-1]) if keys[-1].isdigit() else keys[-1]
+    if value is None:
+        del target[last]
+    else:
+        target[last] = value
+    with pytest.raises(render.InvalidSummary) as exc:
+        render.render_deck(data)
+    assert message in str(exc.value)

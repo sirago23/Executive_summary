@@ -96,7 +96,7 @@ Standard checks used below:
 **Files:** `S/check_coverage.py`, `tests/test_check_coverage.py`
 **Scope:** M
 
-### - [ ] Task 5: Table slides
+### - [x] Task 5: Table slides
 
 **Description:** Add schema, validation and render functions for slides 4 (acceptance criteria per story), 8 (data, simplified), 9 (tech stack with plain explanations), 14 (rules: always / ask first / never), 15 (decisions and out of scope), 16 (success criteria) and 17 (other notes). Tables split onto continuation slides after 8 rows.
 

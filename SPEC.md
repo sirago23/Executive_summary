@@ -176,7 +176,7 @@ Slides appear in this order, and only when the content they need was found in th
   "risks": [{ "risk": "", "impact": "High|Med|Low", "handling": "", "src": "" }],
   "rules": { "always": [""], "ask_first": [""], "never": [""], "src": "" },
   "decisions": [{ "text": "", "src": "" }],
-  "out_of_scope": [""],
+  "out_of_scope": [{ "text": "", "src": "" }],
   "success": [{ "text": "", "phase": "", "src": "" }],
   "open_questions": [""]
 }

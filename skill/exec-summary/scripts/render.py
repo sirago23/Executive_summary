@@ -21,6 +21,7 @@ from validate import validate
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
 STORIES_PER_SLIDE = 6
+ROWS_PER_SLIDE = 8
 
 Slide = tuple[str, str, str]  # (id, title in the contents list, inner HTML)
 
@@ -106,6 +107,117 @@ def render_stories(data: dict) -> list[Slide]:
     return slides
 
 
+def table_slides(
+    slide_id: str, title: str, headers: list[str], rows: list[tuple[list[str], str]]
+) -> list[Slide]:
+    """Slides for a table. Each row is (cells as escaped HTML, src). A source column is added,
+    and the table continues on another slide after ROWS_PER_SLIDE rows."""
+    if not rows:
+        return []
+    head = "".join(f"<th>{esc(h)}</th>" for h in [*headers, "Source"])
+    slides = []
+    for page, group in enumerate(chunks(rows, ROWS_PER_SLIDE), start=1):
+        id_suffix, title_suffix = suffix(page)
+        body = "".join(
+            "<tr>"
+            + "".join(f"<td>{cell}</td>" for cell in cells)
+            + f'<td class="src">{esc(src)}</td></tr>'
+            for cells, src in group
+        )
+        shown = f"{title}{title_suffix}"
+        slides.append(
+            (
+                f"{slide_id}{id_suffix}",
+                shown,
+                f"<h2>{esc(shown)}</h2><table><thead><tr>{head}</tr></thead>"
+                f"<tbody>{body}</tbody></table>",
+            )
+        )
+    return slides
+
+
+def render_criteria(data: dict) -> list[Slide]:
+    rows = [
+        ([f"{esc(s['id'])}: {esc(s['want'])}", esc(criterion)], s["src"])
+        for s in data.get("stories", [])
+        for criterion in s.get("criteria", [])
+    ]
+    return table_slides("criteria", "How we will know it works", ["Story", "It works when"], rows)
+
+
+def render_data(data: dict) -> list[Slide]:
+    rows = [
+        ([esc(d["name"]), esc(d["plain"]), esc(", ".join(d.get("fields", [])))], d["src"])
+        for d in data.get("data", [])
+    ]
+    return table_slides(
+        "data", "What information it keeps", ["Item", "What it is", "Details"], rows
+    )
+
+
+def render_stack(data: dict) -> list[Slide]:
+    rows = [
+        ([esc(s["part"]), esc(s["choice"]), esc(s["plain"])], s["src"])
+        for s in data.get("stack", [])
+    ]
+    return table_slides("stack", "Building blocks", ["Part", "Choice", "What it means"], rows)
+
+
+RULE_GROUPS = [("always", "Always"), ("ask_first", "Asks you first"), ("never", "Never")]
+
+
+def render_rules(data: dict) -> list[Slide]:
+    rules = data.get("rules")
+    if not rules:
+        return []
+    cards = "".join(
+        f'<div class="card"><h3>{label}</h3><ul>'
+        + "".join(f"<li>{esc(item)}</li>" for item in rules[key])
+        + "</ul></div>"
+        for key, label in RULE_GROUPS
+        if rules.get(key)
+    )
+    title = "Rules the AI follows"
+    body = f'<h2>{title}</h2><div class="cards">{cards}</div>{src_note(rules["src"])}'
+    return [("rules", title, body)]
+
+
+def render_decisions(data: dict) -> list[Slide]:
+    rows = [([esc(d["text"])], d["src"]) for d in data.get("decisions", [])]
+    return table_slides("decisions", "Decisions already made", ["Decision"], rows)
+
+
+def render_out_of_scope(data: dict) -> list[Slide]:
+    rows = [([esc(d["text"])], d["src"]) for d in data.get("out_of_scope", [])]
+    return table_slides("out-of-scope", "Not included", ["Left out on purpose"], rows)
+
+
+def render_success(data: dict) -> list[Slide]:
+    items = data.get("success", [])
+    with_phase = any(s.get("phase") for s in items)
+    rows = [
+        ([esc(s["text"])] + ([esc(s.get("phase", ""))] if with_phase else []), s["src"])
+        for s in items
+    ]
+    headers = ["Success looks like"] + (["Phase"] if with_phase else [])
+    return table_slides("success", "How we measure success", headers, rows)
+
+
+def render_notes(data: dict) -> list[Slide]:
+    slides = []
+    for page, note in enumerate(data.get("notes", []), start=1):
+        id_suffix, _ = suffix(page)
+        body = "".join(f"<p>{esc(t)}</p>" for t in note["text"])
+        slides.append(
+            (
+                f"notes{id_suffix}",
+                note["title"],
+                f"<h2>{esc(note['title'])}</h2>{body}{src_note(note['src'])}",
+            )
+        )
+    return slides
+
+
 def render_check(data: dict) -> list[Slide]:
     """The closing checklist. It is always built."""
     name = data["project"]["name"]
@@ -131,7 +243,20 @@ def render_check(data: dict) -> list[Slide]:
     return [("check", "Please check", body)]
 
 
-SLIDE_BUILDERS = [render_title, render_goal, render_stories, render_check]
+SLIDE_BUILDERS = [
+    render_title,
+    render_goal,
+    render_stories,
+    render_criteria,
+    render_data,
+    render_stack,
+    render_rules,
+    render_decisions,
+    render_out_of_scope,
+    render_success,
+    render_notes,
+    render_check,
+]
 
 
 def build_slides(data: dict) -> list[Slide]:

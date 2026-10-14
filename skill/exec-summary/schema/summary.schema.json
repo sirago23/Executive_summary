@@ -68,6 +68,127 @@
           "as": { "type": "string", "minLength": 1, "maxLength": 120 },
           "want": { "type": "string", "minLength": 1, "maxLength": 300 },
           "so": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "criteria": {
+            "type": "array",
+            "maxItems": 20,
+            "items": { "type": "string", "minLength": 1, "maxLength": 300 }
+          },
+          "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    },
+    "data": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "required": ["name", "plain", "src"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "plain": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "fields": {
+            "type": "array",
+            "maxItems": 20,
+            "items": { "type": "string", "minLength": 1, "maxLength": 80 }
+          },
+          "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    },
+    "stack": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "required": ["part", "choice", "plain", "src"],
+        "additionalProperties": false,
+        "properties": {
+          "part": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "choice": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "plain": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "required": ["src"],
+      "additionalProperties": false,
+      "properties": {
+        "always": {
+          "type": "array",
+          "maxItems": 15,
+          "items": { "type": "string", "minLength": 1, "maxLength": 300 }
+        },
+        "ask_first": {
+          "type": "array",
+          "maxItems": 15,
+          "items": { "type": "string", "minLength": 1, "maxLength": 300 }
+        },
+        "never": {
+          "type": "array",
+          "maxItems": 15,
+          "items": { "type": "string", "minLength": 1, "maxLength": 300 }
+        },
+        "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "required": ["text", "src"],
+        "additionalProperties": false,
+        "properties": {
+          "text": { "type": "string", "minLength": 1, "maxLength": 400 },
+          "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    },
+    "out_of_scope": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "required": ["text", "src"],
+        "additionalProperties": false,
+        "properties": {
+          "text": { "type": "string", "minLength": 1, "maxLength": 400 },
+          "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    },
+    "success": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "required": ["text", "src"],
+        "additionalProperties": false,
+        "properties": {
+          "text": { "type": "string", "minLength": 1, "maxLength": 400 },
+          "phase": { "type": "string", "maxLength": 80 },
+          "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "required": ["title", "text", "src"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "text": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": { "type": "string", "minLength": 1, "maxLength": 400 }
+          },
           "src": { "type": "string", "minLength": 1, "maxLength": 300 }
         }
       }

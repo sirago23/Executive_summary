@@ -63,7 +63,7 @@ T1 Scaffold
 
 ### Phase B: All slides
 - [x] Task 4: `check_coverage.py`
-- [ ] Task 5: Table slides
+- [x] Task 5: Table slides
 - [ ] Task 6: Diagram slides
 - [ ] Task 7: Screen slides
 - [ ] Task 8: Plan slides
