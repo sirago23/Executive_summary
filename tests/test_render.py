@@ -500,3 +500,142 @@ def test_image_alt_text_is_the_file_name_without_path_and_is_escaped(data, tmp_p
     html = render.render_deck(data, project_dir=tmp_path)
     assert 'alt="My home"' in html
     assert str(tmp_path) not in html
+
+
+# --- Task 8: plan slides --------------------------------------------------------------------
+
+
+def make_phases(counts: list[int]) -> list[dict]:
+    phases = []
+    for p, count in enumerate(counts, start=1):
+        phases.append(
+            {
+                "id": f"P{p}",
+                "title": f"Phase {p} title",
+                "goal": f"Goal of phase {p}",
+                "tasks": [
+                    {
+                        "id": f"T{p}.{t}",
+                        "title": f"Task {p}.{t} title",
+                        "you_will_see": f"What you see for {p}.{t}",
+                        "src": SRC,
+                    }
+                    for t in range(1, count + 1)
+                ],
+                "src": SRC,
+            }
+        )
+    return phases
+
+
+def with_plan(data: dict, counts=(3, 4, 3, 4, 3)) -> dict:
+    data["phases"] = make_phases(list(counts))
+    data["checkpoints"] = [
+        {
+            "title": "Checkpoint A",
+            "phase": "Phase 1 title",
+            "items": ["Review the look."],
+            "src": SRC,
+        }
+    ]
+    data["risks"] = [
+        {
+            "risk": "Reading slips fails.",
+            "impact": "High",
+            "handling": "Confirm by hand.",
+            "src": SRC,
+        },
+        {"risk": "Dates are wrong.", "impact": "Low", "handling": "Show the date.", "src": SRC},
+    ]
+    return data
+
+
+def tasks_slides(html: str) -> list[str]:
+    parts = re.split(r'(?=<section class="slide" id="s-)', html)
+    return [p for p in parts if p.startswith('<section class="slide" id="s-tasks')]
+
+
+def test_plan_slides_follow_the_stack_and_come_before_rules(data):
+    with_tables(data)
+    with_plan(data)
+    ids = slide_ids(render.render_deck(data))
+    assert ids.index("stack") < ids.index("phases") < ids.index("tasks")
+    assert ids.index("tasks") < ids.index("checkpoints") < ids.index("risks") < ids.index("rules")
+
+
+def test_phases_slide_is_a_step_strip_with_goals_and_sources(data):
+    html = render.render_deck(with_plan(data))
+    assert html.count('<li class="step">') == 5
+    assert "Goal of phase 3" in html and "Phase 5 title" in html
+
+
+def test_seventeen_tasks_in_five_phases_are_all_shown_and_split_over_slides(data):
+    html = render.render_deck(with_plan(data, (3, 4, 3, 4, 3)))
+    slides = tasks_slides(html)
+    assert len(slides) >= 2
+    for p, count in enumerate((3, 4, 3, 4, 3), start=1):
+        for t in range(1, count + 1):
+            assert f"Task {p}.{t} title" in html
+            assert f"What you see for {p}.{t}" in html
+
+
+def test_a_phase_title_is_never_cut_off_from_its_tasks(data):
+    html = render.render_deck(with_plan(data, (3, 4, 3, 4, 3)))
+    for slide in tasks_slides(html):
+        body = slide.split("</h2>", 1)[1]
+        assert body.startswith("<h3>"), "a tasks slide must open with a phase title"
+        for block in body.split("<h3>")[1:]:
+            assert "<td>" in block, "every phase title has task rows under it"
+
+
+def test_a_phase_with_many_tasks_continues_with_its_title_repeated(data):
+    html = render.render_deck(with_plan(data, (12,)))
+    assert html.count("Phase 1 title (continued)") == 1
+    assert all(f"Task 1.{t} title" in html for t in range(1, 13))
+
+
+def test_checkpoints_slide_lists_what_you_approve(data):
+    html = render.render_deck(with_plan(data))
+    assert "Review the look." in html and "Checkpoint A" in html
+
+
+def test_risk_impact_is_text_as_well_as_color(data):
+    html = render.render_deck(with_plan(data))
+    assert '<span class="impact impact-high">High</span>' in html
+    assert '<span class="impact impact-low">Low</span>' in html
+
+
+def test_plan_slides_are_dropped_when_absent(data):
+    ids = slide_ids(render.render_deck(data))
+    for sid in ["phases", "tasks", "checkpoints", "risks"]:
+        assert sid not in ids
+
+
+def test_plan_fields_are_escaped(data):
+    evil = "<script>alert(1)</script>"
+    with_plan(data)
+    data["phases"][0]["title"] = evil
+    data["phases"][0]["goal"] = evil
+    data["phases"][0]["tasks"][0]["you_will_see"] = evil
+    data["checkpoints"][0]["items"] = [evil]
+    data["risks"][0]["handling"] = evil
+    html = render.render_deck(data)
+    assert "<script>alert(1)" not in html
+    assert html.count("&lt;script&gt;alert(1)&lt;/script&gt;") >= 5
+
+
+@pytest.mark.parametrize(
+    ("edit", "message"),
+    [
+        (lambda d: d["risks"][0].update(impact="Huge"), "risks[0].impact: must be one of"),
+        (lambda d: d["phases"][0]["tasks"][0].pop("src"), "phases[0].tasks[0].src: missing"),
+        (lambda d: d["phases"][0]["tasks"][0].update(src="X.md > A"), "phases[0].tasks[0].src"),
+        (lambda d: d["checkpoints"][0].pop("items"), "checkpoints[0].items: missing"),
+    ],
+)
+def test_plan_validation(data, edit, message):
+    with_plan(data)
+    edit(data)
+    with pytest.raises(render.InvalidSummary) as exc:
+        render.render_deck(data)
+    assert message in str(exc.value)

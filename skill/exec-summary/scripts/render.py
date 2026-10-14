@@ -26,6 +26,8 @@ TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
 STORIES_PER_SLIDE = 6
 ROWS_PER_SLIDE = 8
 WIREFRAMES_PER_SLIDE = 2
+STEPS_PER_SLIDE = 6
+TASK_SLIDE_BUDGET = 10  # rows on one tasks slide; each phase title counts as one row
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 DESIGN_FOLDERS = ("design", "docs/design", "mockups")
 IMAGE_TYPES = {
@@ -298,6 +300,88 @@ def render_stack(data: dict) -> list[Slide]:
     return table_slides("stack", "Building blocks", ["Part", "Choice", "What it means"], rows)
 
 
+def render_phases(data: dict) -> list[Slide]:
+    phases = data.get("phases", [])
+    slides = []
+    for page, group in enumerate(chunks(phases, STEPS_PER_SLIDE), start=1):
+        id_suffix, title_suffix = suffix(page)
+        title = f"Delivery phases{title_suffix}"
+        steps = "".join(
+            '<li class="step">'
+            f"<strong>{esc(p['title'])}</strong>"
+            + (f"<span>{esc(p['goal'])}</span>" if p.get("goal") else "")
+            + f'<span class="src">Source: {esc(p["src"])}</span></li>'
+            for p in group
+        )
+        slides.append(
+            (f"phases{id_suffix}", title, f'<h2>{esc(title)}</h2><ol class="steps">{steps}</ol>')
+        )
+    return slides
+
+
+def task_block(title: str, tasks: list[dict]) -> str:
+    rows = "".join(
+        f"<tr><td>{esc(t['title'])}</td><td>{esc(t.get('you_will_see', ''))}</td>"
+        f'<td class="src">{esc(t["src"])}</td></tr>'
+        for t in tasks
+    )
+    return (
+        f"<h3>{esc(title)}</h3><table><thead><tr><th>Task</th><th>What you will see working</th>"
+        f"<th>Source</th></tr></thead><tbody>{rows}</tbody></table>"
+    )
+
+
+def render_tasks(data: dict) -> list[Slide]:
+    """Tasks grouped by phase. A phase title always sits on the same slide as its tasks."""
+    blocks: list[tuple[str, int]] = []
+    for phase in data.get("phases", []):
+        for page, group in enumerate(chunks(phase.get("tasks", []), ROWS_PER_SLIDE), start=1):
+            _, title_suffix = suffix(page)
+            blocks.append((task_block(f"{phase['title']}{title_suffix}", group), len(group) + 1))
+    pages: list[list[str]] = []
+    used = TASK_SLIDE_BUDGET
+    for html, cost in blocks:
+        if used + cost > TASK_SLIDE_BUDGET:
+            pages.append([])
+            used = 0
+        pages[-1].append(html)
+        used += cost
+    slides = []
+    for page, parts in enumerate(pages, start=1):
+        id_suffix, title_suffix = suffix(page)
+        title = f"Tasks by phase{title_suffix}"
+        slides.append((f"tasks{id_suffix}", title, f"<h2>{esc(title)}</h2>{''.join(parts)}"))
+    return slides
+
+
+def render_checkpoints(data: dict) -> list[Slide]:
+    rows = []
+    for c in data.get("checkpoints", []):
+        name = f"<strong>{esc(c['title'])}</strong>"
+        if c.get("phase"):
+            name += f"<br>{esc(c['phase'])}"
+        items = "<ul>" + "".join(f"<li>{esc(i)}</li>" for i in c["items"]) + "</ul>"
+        rows.append(([name, items], c["src"]))
+    return table_slides("checkpoints", "Checkpoints you approve", ["Checkpoint", "You check"], rows)
+
+
+def render_risks(data: dict) -> list[Slide]:
+    rows = [
+        (
+            [
+                esc(r["risk"]),
+                f'<span class="impact impact-{r["impact"].lower()}">{esc(r["impact"])}</span>',
+                esc(r["handling"]),
+            ],
+            r["src"],
+        )
+        for r in data.get("risks", [])
+    ]
+    return table_slides(
+        "risks", "Risks and how they are handled", ["Risk", "Impact", "Handled by"], rows
+    )
+
+
 RULE_GROUPS = [("always", "Always"), ("ask_first", "Asks you first"), ("never", "Never")]
 
 
@@ -388,6 +472,10 @@ SLIDE_BUILDERS = [
     render_flow,
     render_data,
     render_stack,
+    render_phases,
+    render_tasks,
+    render_checkpoints,
+    render_risks,
     render_rules,
     render_decisions,
     render_out_of_scope,

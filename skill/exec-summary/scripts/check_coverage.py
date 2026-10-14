@@ -49,7 +49,7 @@ def found_counts(summary: dict) -> dict[str, int]:
     return {
         "stories": len(summary.get("stories", [])),
         "tasks": sum(len(p.get("tasks", [])) for p in phases),
-        "checkpoints": sum(1 for p in phases if p.get("checkpoint")),
+        "checkpoints": len(summary.get("checkpoints", [])),
     }
 
 

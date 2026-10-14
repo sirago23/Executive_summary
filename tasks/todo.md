@@ -147,7 +147,7 @@ Standard checks used below:
 **Files:** `S/wireframe.py`, `summary.schema.json`, `S/render.py`, `deck.css`, tests
 **Scope:** M
 
-### - [ ] Task 8: Plan slides
+### - [x] Task 8: Plan slides
 
 **Description:** Add schema, validation and render functions for slides 10 (phases and timeline as a simple step strip), 11 (tasks by phase: title and what the owner will see working), 12 (checkpoints the owner approves) and 13 (risks with High/Med/Low as text plus color).
 

@@ -113,7 +113,7 @@ def test_spec_sample_has_seven_stories():
     assert expected["stories"] == 7
 
 
-def test_task_and_checkpoint_counts_come_from_summary_phases(tmp_path):
+def test_task_and_checkpoint_counts_come_from_summary(tmp_path):
     todo = tmp_path / "todo.md"
     todo.write_text(
         "# Todo\n\n## Phase 1\n### Task 1: A\n### Task 2: B\n### Checkpoint 1\n",
@@ -128,13 +128,23 @@ def test_task_and_checkpoint_counts_come_from_summary_phases(tmp_path):
                 "id": "P1",
                 "src": f"{path} > Phase 1",
                 "tasks": [{"id": "T1", "src": f"{path} > Task 1: A"}],
-                "checkpoint": [],
             }
         ],
     }
     errors = coverage.check(summary, [path])
     assert any("tasks" in e and "expected 2" in e and "found 1" in e for e in errors)
     assert any("checkpoints" in e and "expected 1" in e and "found 0" in e for e in errors)
+
+
+def test_checkpoints_in_the_summary_are_counted(tmp_path):
+    todo = tmp_path / "todo.md"
+    todo.write_text("# Todo\n\n## Checkpoint A\n\n## Checkpoint B\n", encoding="utf-8")
+    path = str(todo)
+    checkpoint = {"title": "A", "items": ["x"], "src": f"{path} > Checkpoint A"}
+    summary = {"sources": [{"path": path}], "skipped": [], "checkpoints": [checkpoint]}
+    errors = coverage.check(summary, [path])
+    assert any("checkpoints" in e and "expected 2" in e and "found 1" in e for e in errors)
+    assert not any("Checkpoint A" in e for e in errors)
 
 
 def run_cli(*args: str) -> subprocess.CompletedProcess:

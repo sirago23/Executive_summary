@@ -66,7 +66,7 @@ T1 Scaffold
 - [x] Task 5: Table slides
 - [x] Task 6: Diagram slides
 - [x] Task 7: Screen slides
-- [ ] Task 8: Plan slides
+- [x] Task 8: Plan slides
 - [ ] Task 9: Sample fixtures render both decks
 
 ### Checkpoint B

@@ -193,6 +193,71 @@
         }
       }
     },
+    "phases": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "src"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 20 },
+          "title": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "goal": { "type": "string", "maxLength": 300 },
+          "tasks": {
+            "type": "array",
+            "maxItems": 40,
+            "items": {
+              "type": "object",
+              "required": ["id", "title", "src"],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "type": "string", "minLength": 1, "maxLength": 20 },
+                "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+                "you_will_see": { "type": "string", "maxLength": 300 },
+                "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+              }
+            }
+          },
+          "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    },
+    "checkpoints": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["title", "items", "src"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "phase": { "type": "string", "maxLength": 100 },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 10,
+            "items": { "type": "string", "minLength": 1, "maxLength": 300 }
+          },
+          "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["risk", "impact", "handling", "src"],
+        "additionalProperties": false,
+        "properties": {
+          "risk": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "impact": { "type": "string", "enum": ["High", "Med", "Low"] },
+          "handling": { "type": "string", "minLength": 1, "maxLength": 400 },
+          "src": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    },
     "screens": {
       "type": "array",
       "maxItems": 6,
