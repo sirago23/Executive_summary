@@ -12,6 +12,14 @@ Local rules for this project only. The parent WAT `CLAUDE.md` in Downloads also 
 - Check that nothing sensitive is staged before every push.
 - Keep `session-handoff/` and `.tmp/` out of git.
 
+## Review findings
+- After a code review or security audit, fix without asking:
+  - code review: Critical and Important
+  - security audit: Critical, High and Medium
+- Fix lower-ranked findings when cheap. Otherwise log them in `tasks/<checkpoint>-review.md` with a one-line reason.
+- After fixing, re-run each reproduction from the report and the full test suite, and say which findings are confirmed fixed.
+- Still ask first for anything the Boundaries section says to ask about, and for changes to the summary.json format after Checkpoint C.
+
 ## Token Efficiency
 
 ### 1. Milestone handoff
