@@ -35,3 +35,23 @@ def test_very_long_names_are_shortened_but_stay_distinct():
     b = paths.output_path(["x" * 200 + "2.md"])
     assert len(a.name) <= 130
     assert a != b
+
+
+def test_windows_device_names_are_not_used_as_file_names():
+    for name in ["CON.md", "nul.txt", "Com1.md", "LPT9.md", "aux.tar.md"]:
+        got = paths.output_path([name])
+        assert got.stem.casefold().split(".")[0] not in paths.RESERVED, name
+    assert paths.output_path(["console.md"]) == Path("docs/exec-summary/console.html")
+
+
+def test_out_path_must_be_html_and_not_an_input(tmp_path):
+    spec = tmp_path / "SPEC.md"
+    spec.write_text("x", encoding="utf-8")
+    assert paths.check_out_path(tmp_path / "deck.html", [spec]) == []
+    assert paths.check_out_path(tmp_path / "DECK.HTML", [spec]) == []
+    assert any(
+        "must end in .html" in e for e in paths.check_out_path(tmp_path / "deck.txt", [spec])
+    )
+    assert any("input files" in e for e in paths.check_out_path(spec, [spec]))
+    same = tmp_path / "sub" / ".." / "SPEC.md"
+    assert any("input files" in e for e in paths.check_out_path(same, [spec]))

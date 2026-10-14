@@ -10,3 +10,8 @@ __pycache__/
 htmlcov/
 docs/exec-summary/
 .playwright-mcp/
+credentials.json
+token.json
+*.pem
+*.key
+node_modules/

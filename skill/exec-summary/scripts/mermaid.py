@@ -6,9 +6,8 @@ the direction is restricted, so nothing in summary.json can add Mermaid syntax.
 
 from __future__ import annotations
 
-import re
+from common import is_node_id
 
-NODE_ID = re.compile(r"^[A-Za-z0-9_]+$")
 DIRECTIONS = {"TB", "LR"}
 
 # Order matters: "#" goes first so the entity codes added after it are not touched.
@@ -31,7 +30,7 @@ def escape_label(text: str) -> str:
 
 
 def _node_ref(node_id: str) -> str:
-    if not NODE_ID.match(node_id):
+    if not is_node_id(node_id):
         raise ValueError(f"node id {node_id!r} may only use letters, digits and underscore")
     return f"n_{node_id}"
 

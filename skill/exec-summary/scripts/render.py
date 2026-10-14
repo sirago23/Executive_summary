@@ -10,15 +10,15 @@ that is not in the summary never produces a slide.
 from __future__ import annotations
 
 import argparse
-import base64
-import json
+import hashlib
 import sys
-from html import escape
 from pathlib import Path
 from string import Template
 
+from common import esc, load_json
+from design_images import find_design_images
 from mermaid import to_flowchart
-from paths import output_path
+from paths import check_out_path, output_path
 from validate import validate
 from wireframe import render_wireframe
 
@@ -29,14 +29,6 @@ WIREFRAMES_PER_SLIDE = 2
 STEPS_PER_SLIDE = 6
 TASK_SLIDE_BUDGET = 10  # rows on one tasks slide; each phase title counts as one row
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
-DESIGN_FOLDERS = ("design", "docs/design", "mockups")
-IMAGE_TYPES = {
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".webp": "image/webp",
-    ".svg": "image/svg+xml",
-}
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
 MERMAID_SRI = "sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I"
 MERMAID_TAG = (
@@ -48,10 +40,6 @@ Slide = tuple[str, str, str]  # (id, title in the contents list, inner HTML)
 
 class InvalidSummary(ValueError):
     """The summary does not pass validate.py."""
-
-
-def esc(value: object) -> str:
-    return escape(str(value), quote=True)
 
 
 def chunks(items: list, size: int) -> list[list]:
@@ -164,37 +152,6 @@ def render_criteria(data: dict) -> list[Slide]:
         for criterion in s.get("criteria", [])
     ]
     return table_slides("criteria", "How we will know it works", ["Story", "It works when"], rows)
-
-
-def find_design_images(project_dir: Path | None) -> tuple[list[dict], int]:
-    """Images in the project's design folders as data URIs, and how many were left out.
-
-    Only files directly inside the folders count, and every file must resolve to a place inside
-    the project folder. Images are embedded until MAX_IMAGE_BYTES is reached.
-    """
-    if project_dir is None:
-        return [], 0
-    root = project_dir.resolve()
-    images: list[dict] = []
-    left_out = 0
-    total = 0
-    for folder in DESIGN_FOLDERS:
-        directory = (root / folder).resolve()
-        if not directory.is_dir() or not directory.is_relative_to(root):
-            continue
-        for path in sorted(directory.iterdir()):
-            kind = IMAGE_TYPES.get(path.suffix.lower())
-            real = path.resolve()
-            if kind is None or not real.is_file() or not real.is_relative_to(root):
-                continue
-            size = real.stat().st_size
-            if total + size > MAX_IMAGE_BYTES:
-                left_out += 1
-                continue
-            total += size
-            encoded = base64.b64encode(real.read_bytes()).decode("ascii")
-            images.append({"name": path.stem, "uri": f"data:{kind};base64,{encoded}"})
-    return images, left_out
 
 
 def left_out_note(count: int) -> str:
@@ -371,7 +328,7 @@ def render_risks(data: dict) -> list[Slide]:
         (
             [
                 esc(r["risk"]),
-                f'<span class="impact impact-{r["impact"].lower()}">{esc(r["impact"])}</span>',
+                f'<span class="impact impact-{esc(r["impact"].lower())}">{esc(r["impact"])}</span>',
                 esc(r["handling"]),
             ],
             r["src"],
@@ -438,22 +395,32 @@ def render_notes(data: dict) -> list[Slide]:
     return slides
 
 
+def check_key(data: dict, text: str) -> str:
+    """Storage key for one tick: the deck (project and its files) plus the item's own text, so
+    decks of the same project do not share ticks and reordering questions keeps them."""
+    sources = sorted(s["path"] for s in data["sources"])
+    deck = hashlib.sha1("|".join([data["project"]["name"], *sources]).encode("utf-8")).hexdigest()
+    item = hashlib.sha1(text.encode("utf-8")).hexdigest()
+    return f"exec-summary:{deck[:10]}:{item[:10]}"
+
+
 def render_check(data: dict) -> list[Slide]:
     """The closing checklist. It is always built."""
-    name = data["project"]["name"]
-    items: list[tuple[str, str]] = []
+    items: list[str] = []
     if data.get("goal"):
-        items.append(("goal", "The goal describes what I want."))
+        items.append("The goal describes what I want.")
     if data.get("stories"):
-        items.append(("stories", "The user stories match what I want the system to do."))
-    for index, question in enumerate(data.get("open_questions", []), start=1):
-        items.append((f"question-{index}", f"Open question: {question}"))
+        items.append("The user stories match what I want the system to do.")
+    for checkpoint in data.get("checkpoints", []):
+        items.append(f"{checkpoint['title']}: {'; '.join(checkpoint['items'])}")
+    for question in data.get("open_questions", []):
+        items.append(f"Open question: {question}")
     rows = "".join(
         "<li><label>"
-        f'<input type="checkbox" data-key="{esc("exec-summary:" + name + ":" + key)}">'
+        f'<input type="checkbox" data-key="{esc(check_key(data, text))}">'
         f"<span>{esc(text)}</span>"
         "</label></li>"
-        for key, text in items
+        for text in items
     )
     body = (
         "<h2>Please check</h2>"
@@ -486,22 +453,29 @@ SLIDE_BUILDERS = [
 ]
 
 
-def build_slides(data: dict, project_dir: Path | None = None) -> list[Slide]:
-    images, left_out = find_design_images(project_dir)
+def build_slides(data: dict, images: list[dict] | None = None, left_out: int = 0) -> list[Slide]:
     slides: list[Slide] = []
     for builder in SLIDE_BUILDERS:
         if builder is render_screens:
-            slides.extend(builder(data, images, left_out))
+            slides.extend(builder(data, images or [], left_out))
         else:
             slides.extend(builder(data))
     return slides
 
 
-def render_deck(data: dict, project_dir: Path | None = None) -> str:
+def render_deck(
+    data: dict, project_dir: Path | None = None, design_dirs: list[str] | None = None
+) -> str:
+    """Render the deck. Design images come only from `design_dirs`, folders the user named,
+    relative to `project_dir` (default: the current folder)."""
     errors = validate(data)
     if errors:
         raise InvalidSummary("\n".join(errors))
-    slides = build_slides(data, project_dir)
+    images, left_out = [], 0
+    if design_dirs:
+        root = project_dir or Path.cwd()
+        images, left_out, _ = find_design_images(root, design_dirs, MAX_IMAGE_BYTES)
+    slides = build_slides(data, images, left_out)
     toc = "\n".join(
         f'      <li><a href="#s-{esc(sid)}">{esc(title)}</a></li>' for sid, title, _ in slides
     )
@@ -523,24 +497,39 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="render.py", description=__doc__.splitlines()[0])
     parser.add_argument("summary")
     parser.add_argument("--out")
+    parser.add_argument(
+        "--design-dir",
+        action="append",
+        default=[],
+        help="folder of design images to embed (repeatable). Images are only used when named here.",
+    )
     args = parser.parse_args(argv)
 
-    try:
-        data = json.loads(Path(args.summary).read_text(encoding="utf-8-sig"))
-    except FileNotFoundError:
-        print(f"{args.summary}: file not found", file=sys.stderr)
+    data, problem = load_json(args.summary)
+    if problem:
+        print(problem, file=sys.stderr)
         return 1
-    except json.JSONDecodeError as exc:
-        print(f"{args.summary}: invalid JSON: {exc}", file=sys.stderr)
-        return 1
-
     try:
-        html = render_deck(data, project_dir=Path.cwd())
+        html = render_deck(data, project_dir=Path.cwd(), design_dirs=args.design_dir)
     except InvalidSummary as exc:
         print(exc, file=sys.stderr)
         return 1
 
     out = output_path([s["path"] for s in data["sources"]], args.out)
+    protected = [Path(args.summary), *(Path(s["path"]) for s in data["sources"])]
+    problems = check_out_path(out, protected)
+    if problems:
+        print("\n".join(problems), file=sys.stderr)
+        return 1
+
+    if args.design_dir:
+        images, left_out, ignored = find_design_images(Path.cwd(), args.design_dir, MAX_IMAGE_BYTES)
+        for image in images:
+            print(f"design image embedded: {image['file']} (not checked for personal data)")
+        for note in ignored:
+            print(f"design image ignored: {note}", file=sys.stderr)
+        if left_out:
+            print(f"design images left out for size: {left_out}", file=sys.stderr)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding="utf-8", newline="\n")
     print(out)

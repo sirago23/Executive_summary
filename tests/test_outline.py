@@ -127,3 +127,48 @@ def test_cli_without_paths_exits_1():
     r = subprocess.run([sys.executable, str(SCRIPT)], capture_output=True, text=True)
     assert r.returncode == 1
     assert "usage" in r.stderr.lower()
+
+
+# --- review fixes -----------------------------------------------------------------------------
+
+
+def test_a_very_long_heading_line_is_read_quickly():
+    import time
+
+    started = time.perf_counter()
+    sections = outline.outline_text("# a" + " " * 60000 + "x\n\n## b\n")
+    assert time.perf_counter() - started < 1.0
+    assert [s["heading"] for s in sections][-1] == "b"
+
+
+def test_closing_hashes_are_not_part_of_the_heading():
+    sections = outline.outline_text("## Title ##\n\n### Other   ###   \n")
+    assert [s["heading"] for s in sections] == ["Title", "Other"]
+
+
+def test_only_headings_that_start_with_checkpoint_count_as_checkpoints():
+    text = (
+        "# T\n\n## Checkpoint A\n\n## Checkpoints\n\n"
+        "## Reviewer checkpoint policy\n\n## Checkpoint: Done\n"
+    )
+    flags = {s["heading"]: s["is_checkpoint"] for s in outline.outline_text(text)}
+    assert flags == {
+        "T": False,
+        "Checkpoint A": True,
+        "Checkpoints": False,
+        "Reviewer checkpoint policy": False,
+        "Checkpoint: Done": True,
+    }
+
+
+def test_story_headings_are_flagged():
+    text = "# T\n\n### Story 1\n\n### User story 2: x\n\n### Storyboard\n"
+    flags = {s["heading"]: s["is_story"] for s in outline.outline_text(text)}
+    assert flags["Story 1"] and flags["User story 2: x"] and not flags["Storyboard"]
+
+
+def test_a_file_over_the_size_limit_is_refused(tmp_path, monkeypatch):
+    big = tmp_path / "big.md"
+    big.write_text("# T\n\n## A\n", encoding="utf-8")
+    monkeypatch.setattr(outline, "MAX_FILE_BYTES", 4)
+    assert any("larger than" in e for e in outline.check_paths([str(big)]))

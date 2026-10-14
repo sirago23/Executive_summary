@@ -6,15 +6,11 @@ in BLOCK_TYPES exist, and every string is escaped, so nothing in summary.json be
 
 from __future__ import annotations
 
-from html import escape
+from common import esc
 
 BLOCK_TYPES = ("header", "nav", "stats", "chart", "list", "form", "button", "text", "image")
 MAX_ITEMS = 6
 EXAMPLE_NOTE = "Example layout, not the final design"
-
-
-def esc(value: object) -> str:
-    return escape(str(value), quote=True)
 
 
 def _items(label: str) -> list[str]:

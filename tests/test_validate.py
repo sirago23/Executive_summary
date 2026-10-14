@@ -189,3 +189,91 @@ def test_screens_are_limited_to_six(data):
     screen = {"title": "S", "blocks": [{"type": "text", "label": "x"}]}
     data["screens"] = [screen] * 7
     assert "screens: has more than 6 items" in validate.validate(data)
+
+
+# --- review fixes -----------------------------------------------------------------------------
+
+
+def test_a_node_id_with_a_trailing_newline_is_rejected(data):
+    data["diagrams"] = [diagram(nodes=[{"id": "a\n", "label": "x"}], edges=[])]
+    assert any(e.startswith("diagrams[0].nodes[0].id") for e in validate.validate(data))
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "C:\\Users\\me\\SPEC.md",
+        "/home/me/SPEC.md",
+        "..\\SPEC.md",
+        "docs/../../SPEC.md",
+        "\\\\srv\\x\\a.md",
+    ],
+)
+def test_source_paths_must_be_inside_the_project(data, path):
+    data["sources"][0]["path"] = path
+    errors = validate.validate(data)
+    assert any(e.startswith("sources[0].path: use a path inside the project") for e in errors)
+
+
+def test_relative_source_paths_are_fine(data):
+    data["sources"][0]["path"] = "docs/specs/SPEC.md"
+    data["goal"]["src"] = "docs/specs/SPEC.md > Objective"
+    data["stories"][0]["src"] = data["stories"][1]["src"] = "docs/specs/SPEC.md > User stories"
+    data["skipped"][0]["src"] = "docs/specs/SPEC.md > Code Style"
+    assert validate.validate(data) == []
+
+
+def test_a_text_field_of_only_spaces_is_empty(data):
+    data["goal"]["text"] = ["   "]
+    assert "goal.text[0]: must not be only spaces" in validate.validate(data)
+
+
+def test_duplicate_ids_are_rejected(data):
+    data["stories"][1]["id"] = data["stories"][0]["id"]
+    assert 'stories[1].id: duplicate id "S1"' in validate.validate(data)
+    task = {"id": "T1", "title": "x", "src": "SPEC.md > User stories"}
+    phase = {"title": "P", "src": "SPEC.md > User stories"}
+    data["phases"] = [dict(phase, id="P1", tasks=[task]), dict(phase, id="P1", tasks=[task])]
+    errors = validate.validate(data)
+    assert 'phases[1].id: duplicate id "P1"' in errors
+    assert 'phases[1].tasks[0].id: duplicate id "T1"' in errors
+    data["diagrams"] = [diagram(), diagram()]
+    assert 'diagrams[1].id: duplicate id "arch"' in validate.validate(data)
+
+
+def test_cli_hostile_json_is_a_message_not_a_traceback(tmp_path):
+    deep = tmp_path / "deep.json"
+    deep.write_text("[" * 100000, encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), str(deep)], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 1
+    assert "Traceback" not in result.stderr and "invalid JSON" in result.stderr
+
+
+def test_every_schema_keyword_is_one_validate_py_supports():
+    supported = {
+        "type", "required", "properties", "additionalProperties", "items", "enum",
+        "minItems", "maxItems", "minLength", "maxLength", "$comment",
+    }  # fmt: skip
+
+    def walk(node, path):
+        if isinstance(node, dict):
+            for key, child in node.items():
+                if key == "properties":
+                    for name, sub in child.items():
+                        walk(sub, f"{path}.{name}")
+                else:
+                    assert key in supported, f"{path}: unsupported schema keyword {key!r}"
+                    if key == "items":
+                        walk(child, f"{path}[]")
+
+    walk(validate.load_schema(), "$")
+
+
+def test_wireframe_block_types_match_the_schema():
+    import wireframe
+
+    schema = validate.load_schema()
+    block = schema["properties"]["screens"]["items"]["properties"]["blocks"]["items"]
+    assert list(wireframe.BLOCK_TYPES) == block["properties"]["type"]["enum"]

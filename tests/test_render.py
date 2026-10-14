@@ -423,7 +423,7 @@ def test_unknown_block_type_fails_validation(data):
     assert "screens[0].blocks[0].type: must be one of" in str(exc.value)
 
 
-def test_no_screens_and_no_design_folder_means_no_slide(data, tmp_path):
+def test_no_screens_and_no_design_dirs_means_no_slide(data, tmp_path):
     assert "screens" not in slide_ids(render.render_deck(data, project_dir=tmp_path))
 
 
@@ -434,10 +434,21 @@ def make_design(tmp_path: Path, folder: str = "design", names=("home.png", "add.
     return tmp_path
 
 
+def deck_with_design(data: dict, tmp_path: Path, folders=("design",)) -> str:
+    return render.render_deck(data, project_dir=tmp_path, design_dirs=list(folders))
+
+
+def test_a_design_folder_is_not_read_unless_the_user_names_it(data, tmp_path):
+    make_design(tmp_path)
+    html = render.render_deck(with_screens(data), project_dir=tmp_path)
+    assert "data:image" not in html
+    assert html.count("Example layout, not the final design") == 2
+
+
 @pytest.mark.parametrize("folder", ["design", "docs/design", "mockups"])
 def test_design_images_replace_wireframes(data, tmp_path, folder):
     make_design(tmp_path, folder)
-    html = render.render_deck(with_screens(data), project_dir=tmp_path)
+    html = deck_with_design(with_screens(data), tmp_path, [folder])
     assert html.count("data:image/png;base64,") == 2
     assert "Example layout" not in html
     assert "screens" in slide_ids(html)
@@ -445,61 +456,166 @@ def test_design_images_replace_wireframes(data, tmp_path, folder):
 
 def test_design_images_make_a_slide_even_without_screens(data, tmp_path):
     make_design(tmp_path)
-    assert "screens" in slide_ids(render.render_deck(data, project_dir=tmp_path))
+    assert "screens" in slide_ids(deck_with_design(data, tmp_path))
 
 
 def test_other_file_types_in_the_design_folder_are_ignored(data, tmp_path):
     make_design(tmp_path, names=("notes.txt", "run.exe", "home.png"))
-    html = render.render_deck(data, project_dir=tmp_path)
-    assert html.count("data:image/png;base64,") == 1
+    assert deck_with_design(data, tmp_path).count("data:image/png;base64,") == 1
 
 
-def test_svg_design_is_embedded_as_an_image_only(data, tmp_path):
+def test_a_file_that_is_not_really_an_image_is_not_embedded(data, tmp_path):
+    make_design(tmp_path, names=("home.png",))
+    (tmp_path / "design" / "fake.png").write_text("password=hunter2", encoding="utf-8")
+    (tmp_path / "design" / "fake.jpg").write_text("password=hunter2", encoding="utf-8")
+    (tmp_path / "design" / "fake.webp").write_bytes(b"RIFF....nope")
+    html = deck_with_design(data, tmp_path)
+    assert html.count("data:image/") == 1
+    assert "aHVudGVy" not in html  # base64 of "hunter"
+
+
+def test_real_jpeg_and_webp_are_embedded(data, tmp_path):
     (tmp_path / "design").mkdir()
-    (tmp_path / "design" / "logo.svg").write_text(
-        '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>', encoding="utf-8"
-    )
-    html = render.render_deck(data, project_dir=tmp_path)
+    (tmp_path / "design" / "a.jpg").write_bytes(b"\xff\xd8\xff\xe0" + b"0" * 10)
+    (tmp_path / "design" / "b.webp").write_bytes(b"RIFF\x00\x00\x00\x00WEBPVP8 ")
+    html = deck_with_design(data, tmp_path)
+    assert "data:image/jpeg;base64," in html and "data:image/webp;base64," in html
+
+
+SAFE_SVG = '<svg xmlns="http://www.w3.org/2000/svg"><rect width="4" height="4"/></svg>'
+
+
+def test_a_plain_svg_is_embedded_as_an_image_only(data, tmp_path):
+    (tmp_path / "design").mkdir()
+    (tmp_path / "design" / "logo.svg").write_text(SAFE_SVG, encoding="utf-8")
+    html = deck_with_design(data, tmp_path)
     assert "data:image/svg+xml;base64," in html
     assert "<svg" not in html
     assert "<img " in html
 
 
+@pytest.mark.parametrize(
+    "svg",
+    [
+        '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+        '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>',
+        '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject/></svg>',
+        '<svg xmlns="http://www.w3.org/2000/svg" xmlns:x="http://www.w3.org/1999/xlink">'
+        '<image x:href="http://evil.example/a.png"/></svg>',
+        '<!DOCTYPE svg [<!ENTITY a "aaaa">]><svg xmlns="http://www.w3.org/2000/svg">&a;</svg>',
+        "<svg",
+    ],
+)
+def test_an_unsafe_svg_is_not_embedded(data, tmp_path, svg):
+    (tmp_path / "design").mkdir()
+    (tmp_path / "design" / "bad.svg").write_text(svg, encoding="utf-8")
+    assert "data:image" not in deck_with_design(data, tmp_path)
+
+
 def test_images_over_the_size_limit_are_left_out_with_a_note(data, tmp_path, monkeypatch):
     make_design(tmp_path, names=("a.png", "b.png", "c.png"))
     monkeypatch.setattr(render, "MAX_IMAGE_BYTES", len(PNG) * 2)
-    html = render.render_deck(data, project_dir=tmp_path)
+    html = deck_with_design(data, tmp_path)
     assert html.count("data:image/png;base64,") == 2
     assert "1 more image was left out" in html
 
 
-def test_design_paths_cannot_leave_the_project_folder(data, tmp_path):
+def link_dir(link: Path, target: Path) -> bool:
+    """Make `link` point at `target`. False when this machine does not allow links."""
+    try:
+        link.symlink_to(target, target_is_directory=True)
+        return True
+    except OSError:
+        made = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(link), str(target)], capture_output=True, check=False
+        )
+        return made.returncode == 0
+
+
+def test_design_folders_cannot_leave_the_project_folder(data, tmp_path):
     outside = tmp_path / "outside"
     outside.mkdir()
     (outside / "secret.png").write_bytes(PNG)
     project = tmp_path / "project"
     project.mkdir()
-    try:
-        (project / "design").symlink_to(outside, target_is_directory=True)
-    except OSError:
-        # Windows without symlink rights: a junction points outside the folder the same way.
-        made = subprocess.run(
-            ["cmd", "/c", "mklink", "/J", str(project / "design"), str(outside)],
-            capture_output=True,
-            check=False,
-        )
-        if made.returncode != 0:
-            pytest.skip("cannot link folders here")
-    html = render.render_deck(data, project_dir=project)
-    assert "data:image" not in html
+    if not link_dir(project / "design", outside):
+        pytest.skip("cannot link folders here")
+    assert "data:image" not in deck_with_design(data, project)
+    assert "data:image" not in deck_with_design(data, project, [str(outside)])
+    assert "data:image" not in deck_with_design(data, project, ["../outside"])
 
 
-def test_image_alt_text_is_the_file_name_without_path_and_is_escaped(data, tmp_path):
+def test_a_link_to_a_file_inside_the_project_is_not_embedded(data, tmp_path, monkeypatch):
+    make_design(tmp_path, names=("home.png", "linked.png"))  # linked.png stands in for a link
+    monkeypatch.setattr(Path, "is_symlink", lambda self: self.name == "linked.png")
+    assert deck_with_design(data, tmp_path).count("data:image/png;base64,") == 1
+
+
+def test_image_captions_do_not_reveal_file_names_or_paths(data, tmp_path):
     (tmp_path / "design").mkdir()
-    (tmp_path / "design" / "My home.png").write_bytes(PNG)
-    html = render.render_deck(data, project_dir=tmp_path)
-    assert 'alt="My home"' in html
+    (tmp_path / "design" / "john_smith_account.png").write_bytes(PNG)
+    html = deck_with_design(data, tmp_path)
+    assert 'alt="Design image 1"' in html
+    assert "john_smith" not in html
     assert str(tmp_path) not in html
+
+
+def deck_json(tmp_path: Path, data: dict) -> str:
+    path = tmp_path / "summary.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return path.name
+
+
+def test_cli_lists_embedded_images_and_ignored_files(data, tmp_path):
+    make_design(tmp_path, names=("home.png",))
+    (tmp_path / "design" / "fake.png").write_text("nope", encoding="utf-8")
+    result = run_cli(tmp_path, deck_json(tmp_path, data), "--design-dir", "design")
+    assert result.returncode == 0, result.stderr
+    assert "design image embedded: home.png" in result.stdout
+    assert "fake.png" in result.stderr
+
+
+def test_cli_without_design_dir_embeds_nothing(data, tmp_path):
+    make_design(tmp_path)
+    result = run_cli(tmp_path, deck_json(tmp_path, data))
+    assert result.returncode == 0, result.stderr
+    assert "design image" not in result.stdout
+
+
+@pytest.mark.parametrize("target", ["SPEC.md", "summary.json", "deck.txt", "notes"])
+def test_cli_refuses_an_out_path_that_is_an_input_or_not_html(data, tmp_path, target):
+    (tmp_path / "SPEC.md").write_text("# keep me\n", encoding="utf-8")
+    name = deck_json(tmp_path, data)
+    before = (tmp_path / "SPEC.md").read_text(encoding="utf-8")
+    result = run_cli(tmp_path, name, "--out", target)
+    assert result.returncode == 1
+    assert "--out" in result.stderr
+    assert (tmp_path / "SPEC.md").read_text(encoding="utf-8") == before
+    assert not (tmp_path / "deck.txt").exists() and not (tmp_path / "notes").exists()
+
+
+def test_cli_hostile_json_gives_a_message_not_a_traceback(tmp_path):
+    (tmp_path / "deep.json").write_text("[" * 100000, encoding="utf-8")
+    result = run_cli(tmp_path, "deep.json")
+    assert result.returncode == 1
+    assert "Traceback" not in result.stderr and "invalid JSON" in result.stderr
+
+
+def test_the_mermaid_url_and_its_hash_change_together():
+    """Bumping the Mermaid version needs a new SRI hash. This fails until both are reviewed."""
+    assert render.MERMAID_URL == "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
+    assert (
+        render.MERMAID_SRI
+        == "sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I"
+    )
+
+
+def test_the_deck_has_a_content_security_policy_that_only_allows_the_pinned_cdn(data):
+    html = render.render_deck(data)
+    policy = re.search(r'Content-Security-Policy" content="([^"]+)"', html).group(1)
+    assert "default-src 'none'" in policy
+    assert "https://cdn.jsdelivr.net" in policy
+    assert "connect-src" not in policy and "'unsafe-eval'" not in policy
 
 
 # --- Task 8: plan slides --------------------------------------------------------------------

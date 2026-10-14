@@ -16,7 +16,11 @@ from pathlib import Path
 
 ALLOWED_SUFFIXES = {".md", ".txt"}
 
-HEADING = re.compile(r"^(#{1,6})\s+(.*?)(?:\s+#+)?\s*$")
+HEADING = re.compile(r"^(#{1,6})\s+(\S.*)$")
+CLOSING_HASHES = re.compile(r"\s#+$")
+CHECKPOINT_HEADING = re.compile(r"^checkpoint\b", re.IGNORECASE)
+STORY_HEADING = re.compile(r"^(user\s+)?stor(y|ies)\s*[:#.\-]?\s*\d+", re.IGNORECASE)
+MAX_FILE_BYTES = 2 * 1024 * 1024
 CHECKBOX_PREFIX = re.compile(r"^[-*+]\s+\[[ xX]\]\s+")
 BULLET = re.compile(r"^\s*[-*+]\s+(.*\S)\s*$")
 CHECKBOX = re.compile(r"^\[([ xX])\]\s+(.*\S)\s*$")
@@ -35,7 +39,8 @@ def _new_section(heading: str, level: int, line: int) -> dict:
         "checkboxes": [],
         "tables": 0,
         "is_task": bool(TASK_HEADING.match(heading)),
-        "is_checkpoint": "checkpoint" in heading.lower(),
+        "is_checkpoint": bool(CHECKPOINT_HEADING.match(heading)),
+        "is_story": bool(STORY_HEADING.match(heading)),
     }
 
 
@@ -59,7 +64,11 @@ def outline_text(text: str) -> list[dict]:
 
         heading = HEADING.match(raw)
         if heading:
-            title = CHECKBOX_PREFIX.sub("", heading.group(2)).strip()
+            title = heading.group(2).rstrip()
+            closing = CLOSING_HASHES.search(title)
+            if closing:
+                title = title[: closing.start()].rstrip()
+            title = CHECKBOX_PREFIX.sub("", title).strip()
             sections.append(_new_section(title, len(heading.group(1)), number))
             previous = raw
             continue
@@ -101,6 +110,8 @@ def check_paths(paths: list[str]) -> list[str]:
             errors.append(f"{path}: file not found")
         elif p.suffix.lower() not in ALLOWED_SUFFIXES:
             errors.append(f"{path}: unsupported file type, only .md and .txt are accepted")
+        elif p.stat().st_size > MAX_FILE_BYTES:
+            errors.append(f"{path}: file is larger than {MAX_FILE_BYTES // 1024 // 1024} MB")
     return errors
 
 

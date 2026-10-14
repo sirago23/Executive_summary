@@ -72,3 +72,8 @@ def test_node_id_named_end_is_safe_because_ids_are_prefixed():
 def test_direction_is_restricted():
     with pytest.raises(ValueError, match="direction"):
         mermaid.to_flowchart(nodes("A"), [], "LR; click a0 call alert()")
+
+
+def test_a_node_id_with_a_trailing_newline_is_rejected():
+    with pytest.raises(ValueError, match="node id"):
+        mermaid.to_flowchart([{"id": "a\n", "label": "x"}], [])

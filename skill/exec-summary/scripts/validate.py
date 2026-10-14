@@ -10,13 +10,12 @@ supported (see the $comment in the schema file).
 from __future__ import annotations
 
 import json
-import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
+
+from common import SRC_SEPARATOR, find_src, is_node_id, load_json
 
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schema" / "summary.schema.json"
-SRC_SEPARATOR = " > "
-NODE_ID = re.compile(r"^[A-Za-z0-9_]+$")
 
 
 def load_schema() -> dict:
@@ -60,6 +59,8 @@ def _check(value: object, schema: dict, path: str, errors: list[str]) -> None:
     if isinstance(value, str):
         if "minLength" in schema and len(value) < schema["minLength"]:
             errors.append(f"{label}: shorter than {schema['minLength']} characters")
+        elif schema.get("minLength", 0) >= 1 and not value.strip():
+            errors.append(f"{label}: must not be only spaces")
         if "maxLength" in schema and len(value) > schema["maxLength"]:
             errors.append(f"{label}: longer than {schema['maxLength']} characters")
 
@@ -84,18 +85,13 @@ def _check(value: object, schema: dict, path: str, errors: list[str]) -> None:
                 _check(child, schema["items"], f"{path}[{index}]", errors)
 
 
-def _find_src(value: object, path: str):
-    """Yield (path, text) for every string stored under a key named `src`."""
-    if isinstance(value, dict):
-        for key, child in value.items():
-            child_path = _join(path, key)
-            if (key == "src" or key.endswith("_src")) and isinstance(child, str):
-                yield child_path, child
-            else:
-                yield from _find_src(child, child_path)
-    elif isinstance(value, list):
-        for index, child in enumerate(value):
-            yield from _find_src(child, f"{path}[{index}]")
+def _is_project_relative(path: str) -> bool:
+    """False for absolute paths (either OS style), drive letters and any `..` part. Decks show
+    these paths, so they must not publish the user name or folder layout."""
+    posix, windows = PurePosixPath(path), PureWindowsPath(path)
+    if posix.is_absolute() or windows.is_absolute() or windows.drive or windows.root:
+        return False
+    return ".." not in posix.parts and ".." not in windows.parts
 
 
 def _check_sources(data: dict, errors: list[str]) -> None:
@@ -103,12 +99,41 @@ def _check_sources(data: dict, errors: list[str]) -> None:
     if not isinstance(sources, list):
         return
     listed = {s["path"] for s in sources if isinstance(s, dict) and isinstance(s.get("path"), str)}
-    for path, text in _find_src(data, ""):
+    for path, text in find_src(data):
         file_part, separator, heading = text.partition(SRC_SEPARATOR)
         if not separator or not file_part.strip() or not heading.strip():
             errors.append(f'{path}: must look like "<file> > <heading>"')
         elif file_part not in listed:
             errors.append(f'{path}: "{file_part}" is not listed in sources')
+
+    for index, source in enumerate(sources):
+        path = source.get("path") if isinstance(source, dict) else None
+        if isinstance(path, str) and not _is_project_relative(path):
+            errors.append(
+                f"sources[{index}].path: use a path inside the project, "
+                "not an absolute path or one with .."
+            )
+
+
+def _check_unique_ids(data: dict, errors: list[str]) -> None:
+    """Ids of stories, phases, tasks and diagrams must be unique, so nothing is listed twice."""
+
+    def scan(items: object, where: str, seen: set[str]) -> None:
+        for index, item in enumerate(items if isinstance(items, list) else []):
+            item_id = item.get("id") if isinstance(item, dict) else None
+            if isinstance(item_id, str):
+                if item_id in seen:
+                    errors.append(f'{where}[{index}].id: duplicate id "{item_id}"')
+                seen.add(item_id)
+
+    scan(data.get("stories"), "stories", set())
+    scan(data.get("diagrams"), "diagrams", set())
+    phases = data.get("phases")
+    scan(phases, "phases", set())
+    task_ids: set[str] = set()
+    for p_index, phase in enumerate(phases if isinstance(phases, list) else []):
+        if isinstance(phase, dict):
+            scan(phase.get("tasks"), f"phases[{p_index}].tasks", task_ids)
 
 
 def _check_diagrams(data: dict, errors: list[str]) -> None:
@@ -126,7 +151,7 @@ def _check_diagrams(data: dict, errors: list[str]) -> None:
             if not isinstance(node_id, str):
                 continue
             where = f"{base}.nodes[{n_index}].id"
-            if not NODE_ID.match(node_id):
+            if not is_node_id(node_id):
                 errors.append(f"{where}: use only letters, digits and underscore")
             elif node_id in seen:
                 errors.append(f'{where}: duplicate node id "{node_id}"')
@@ -146,6 +171,7 @@ def validate(data: object, schema: dict | None = None) -> list[str]:
     if isinstance(data, dict):
         _check_sources(data, errors)
         _check_diagrams(data, errors)
+        _check_unique_ids(data, errors)
     return errors
 
 
@@ -153,14 +179,9 @@ def main(argv: list[str]) -> int:
     if len(argv) != 1:
         print("usage: validate.py <summary.json>", file=sys.stderr)
         return 1
-    path = Path(argv[0])
-    try:
-        data = json.loads(path.read_text(encoding="utf-8-sig"))
-    except FileNotFoundError:
-        print(f"{argv[0]}: file not found", file=sys.stderr)
-        return 1
-    except json.JSONDecodeError as exc:
-        print(f"{argv[0]}: invalid JSON: {exc}", file=sys.stderr)
+    data, problem = load_json(argv[0])
+    if problem:
+        print(problem, file=sys.stderr)
         return 1
     errors = validate(data)
     if errors:
