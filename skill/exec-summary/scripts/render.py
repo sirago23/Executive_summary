@@ -18,7 +18,7 @@ from string import Template
 from common import esc, load_json
 from design_images import find_design_images
 from mermaid import to_flowchart
-from paths import check_out_path, output_path
+from paths import LINKS_FILE, check_out_path, pick_output, read_links, register_deck
 from validate import validate
 from wireframe import render_wireframe
 
@@ -544,7 +544,12 @@ def main(argv: list[str]) -> int:
         print(exc, file=sys.stderr)
         return 1
 
-    out = output_path([s["path"] for s in data["sources"]], args.out)
+    sources = [s["path"] for s in data["sources"]]
+    links, problem = read_links(LINKS_FILE)
+    if problem:
+        print(problem, file=sys.stderr)
+        return 1
+    out = pick_output(sources, links, args.out)
     protected = [Path(args.summary), *(Path(s["path"]) for s in data["sources"])]
     problems = check_out_path(out, protected)
     if problems:
@@ -561,6 +566,10 @@ def main(argv: list[str]) -> int:
             print(f"design images left out for size: {left_out}", file=sys.stderr)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding="utf-8", newline="\n")
+    problem = register_deck(LINKS_FILE, out, sources)
+    if problem:
+        print(problem, file=sys.stderr)
+        return 1
     print(out)
     return 0
 

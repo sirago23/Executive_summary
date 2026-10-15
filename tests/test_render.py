@@ -123,7 +123,9 @@ def test_cli_out_wins(tmp_path):
     r = run_cli(tmp_path, str(FIXTURE), "--out", "build/deck.html")
     assert r.returncode == 0, r.stderr
     assert (tmp_path / "build" / "deck.html").is_file()
-    assert not (tmp_path / "docs").exists()
+    assert not (tmp_path / "docs" / "exec-summary" / "SPEC.html").exists()
+    links = json.loads((tmp_path / "docs/exec-summary/links.json").read_text(encoding="utf-8"))
+    assert list(links) == ["build/deck.html"]  # a custom output is recorded too
 
 
 def test_cli_refuses_invalid_summary_and_writes_nothing(tmp_path, data):
@@ -935,3 +937,50 @@ def test_deck_width_and_text_sizes_stay_at_the_chosen_limits(data):
     html = render.render_deck(data)
     assert "max-width: 1280px" in css_rule(html, "#deck")
     assert "2.75rem)" in html and "1.375rem)" in html and "1.125rem)" in html
+
+
+# --- links.json is kept up to date by the CLI ----------------------------------------------------
+
+
+def summary_for(tmp_path: Path, data: dict, source: str, name: str) -> str:
+    data["sources"] = [{"path": source}]
+    for key in list(data):
+        if key not in ("project", "sources", "skipped"):
+            del data[key]
+    data["skipped"] = []
+    path = tmp_path / name
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return name
+
+
+def test_cli_registers_the_deck_in_links_json(tmp_path, data):
+    name = summary_for(tmp_path, data, "docs/SPEC.md", "a.json")
+    assert run_cli(tmp_path, name).returncode == 0
+    links = json.loads((tmp_path / "docs/exec-summary/links.json").read_text(encoding="utf-8"))
+    assert links == {"docs/exec-summary/SPEC.html": {"sources": ["docs/SPEC.md"], "url": None}}
+
+
+def test_cli_gives_a_same_named_file_in_another_folder_its_own_deck_and_keeps_the_first(
+    tmp_path, data
+):
+    first = summary_for(tmp_path, data, "docs/SPEC.md", "a.json")
+    second = summary_for(tmp_path, data, "other/SPEC.md", "b.json")
+    assert run_cli(tmp_path, first).returncode == 0
+    assert run_cli(tmp_path, second).returncode == 0
+    decks = tmp_path / "docs" / "exec-summary"
+    assert (decks / "SPEC.html").is_file() and (decks / "other-SPEC.html").is_file()
+    again = run_cli(tmp_path, first)  # the first deck is rebuilt in place, not renamed
+    assert again.returncode == 0 and (decks / "SPEC.html").is_file()
+    links = json.loads((decks / "links.json").read_text(encoding="utf-8"))
+    assert set(links) == {"docs/exec-summary/SPEC.html", "docs/exec-summary/other-SPEC.html"}
+
+
+def test_cli_stops_on_a_broken_links_file_and_writes_no_deck(tmp_path, data):
+    name = summary_for(tmp_path, data, "SPEC.md", "a.json")
+    folder = tmp_path / "docs" / "exec-summary"
+    folder.mkdir(parents=True)
+    (folder / "links.json").write_text("{broken", encoding="utf-8")
+    result = run_cli(tmp_path, name)
+    assert result.returncode == 1 and "links.json" in result.stderr
+    assert not (folder / "SPEC.html").exists()
+    assert (folder / "links.json").read_text(encoding="utf-8") == "{broken"
