@@ -73,7 +73,7 @@ def render_title(data: dict) -> list[Slide]:
         parts.append(f"<p>{meta}</p>")
     rows = "".join(
         "<tr>"
-        f"<td>{esc(s['path'])}</td>"
+        f'<td class="path">{esc(s["path"])}</td>'
         f"<td>{esc(s.get('modified', ''))}</td>"
         f"<td>{esc(', '.join(s.get('found', [])))}</td>"
         "</tr>"

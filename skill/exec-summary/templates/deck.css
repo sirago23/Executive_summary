@@ -242,9 +242,23 @@ td.src {
   line-height: 1.4;
   color: var(--muted);
   opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+
+td.path {
+  min-width: 7em;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 719px) {
+  #deck {
+    padding: 8px;
+  }
+
+  .slide {
+    padding: 20px 12px;
+  }
+
   th,
   td {
     padding: 6px 4px;
@@ -253,6 +267,7 @@ td.src {
   th.src,
   td.src {
     width: 22%;
+    min-width: 5.5em;
     font-size: 0.6875rem;
   }
 }

@@ -242,12 +242,12 @@ Standard checks used below:
 **Description:** Check every slide type against the spec's Design Direction: WCAG AA contrast in both themes, keyboard navigation and visible focus, 360 px layout, and a print stylesheet with one slide per page. Bring `S` coverage to at least 85%. Write `README.md` (what it does, install, usage with examples, the spec-only and full workflows, where outputs go).
 
 **Acceptance criteria:**
-- [ ] Print to PDF of the full sample deck gives one slide per page with nothing cut off.
-- [ ] Keyboard alone moves through slides and ticks checkboxes. Focus is visible.
-- [ ] `python -m pytest --cov` shows at least 85% for `S`.
+- [x] Print to PDF of the full sample deck gives one slide per page with nothing cut off.
+- [x] Keyboard alone moves through slides and ticks checkboxes. Focus is visible.
+- [x] `python -m pytest --cov` shows at least 85% for `S`.
 
 **Verification:**
-- [ ] `CHECKS` pass
+- [x] `CHECKS` pass
 - [ ] Manual: print preview, 360 px and dark mode check with the user
 
 **Dependencies:** Task 11

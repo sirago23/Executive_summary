@@ -64,8 +64,12 @@
   window.addEventListener("hashchange", showFromHash);
 
   document.addEventListener("keydown", function (event) {
-    var tag = event.target.tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA" || event.altKey || event.ctrlKey || event.metaKey) {
+    var target = event.target;
+    var isTyping =
+      target.tagName === "TEXTAREA" ||
+      target.isContentEditable ||
+      (target.tagName === "INPUT" && target.type !== "checkbox");
+    if (isTyping || event.altKey || event.ctrlKey || event.metaKey) {
       return;
     }
     if (event.key === "ArrowRight" || event.key === "PageDown") {
@@ -198,5 +202,6 @@
     drawDiagrams();
   } else {
     window.addEventListener("load", drawDiagrams);
-  }  showFromHash();
+  }
+  showFromHash();
 })();
