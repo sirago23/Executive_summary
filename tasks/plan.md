@@ -86,8 +86,8 @@ T1 Scaffold
 - [x] Task 12: Accessibility, mobile, print, coverage and README
 
 ### Checkpoint: Done
-- [ ] Spec success criteria 1-8 all pass
-- [ ] User approves
+- [x] Spec success criteria 1-8 all pass
+- [x] User approves (2026-10-15)
 
 ## Risks and Mitigations
 

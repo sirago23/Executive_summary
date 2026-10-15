@@ -255,8 +255,8 @@ Standard checks used below:
 **Scope:** M
 
 ### - [ ] Checkpoint: Done
-- [ ] Spec success criteria 1-8 all pass
-- [ ] User approves
+- [x] Spec success criteria 1-8 all pass
+- [x] User approves (2026-10-15)
 
 ## Deferred (owner's choice, not done)
 - **Git purge of the old Gmail address (decided 2026-10-15: not now).** The address is still in local-only leftovers: branch `backup-before-rewrite` and `refs/original/*`. `origin/main` is clean (noreply address only). To purge: `git branch -D backup-before-rewrite`, delete every ref under `refs/original/`, `git reflog expire --expire=now --all`, `git gc --prune=now`. Then `git log --all --format=%ae | sort -u` should list only the noreply address.
