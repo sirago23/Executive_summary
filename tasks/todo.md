@@ -207,7 +207,7 @@ Standard checks used below:
 **Files:** `skill/exec-summary/SKILL.md`, `references/writing-guide.md`, `references/summary-format.md`, `references/design-rules.md`, `tools/install.py`, `S/paths.py`, tests
 **Scope:** M
 
-### - [ ] Task 11: Live runs through `/exec-summary`
+### - [x] Task 11: Live runs through `/exec-summary`
 
 **Description:** Run the installed skill as a user would, in this repo: first `/exec-summary sample/SPEC_sample.md`, then `/exec-summary sample/SPEC_sample.md sample/plan_sample.md sample/todo_sample.md`. Ask before each publish. Then change one line in a copy of the spec and re-run to check the same link updates. Fix the skill instructions where Claude's run needed manual help, and note what was learned in `SKILL.md`.
 
@@ -220,6 +220,8 @@ Standard checks used below:
 **Verification:**
 - [ ] Manual: user opens both links
 - [ ] `CHECKS` pass after any fixes
+
+**Result (2026-10-15):** Both decks ran through the installed skill with no fixes to `summary.json` (validate and coverage passed the first time). Spec only: 25 slides, no phase, task, checkpoint or risk slides. Full: 34 slides, 7 stories, 5 phases, 17 tasks, 5 checkpoints, 7 risks. Both decks: 2 diagrams drawn locally and 3 labelled wireframes. Two private Artifacts with separate saved links. A one-line change to the spec, then a re-run, updated the same link (Version 2) and left the other deck's link alone; the real text was then restored (Version 3). Skill fixes from the run are in `SKILL.md`. Still for the owner: open both links and confirm the diagrams draw inside the Artifact (a private Artifact cannot be opened by a script).
 
 **Dependencies:** Task 10
 **Files:** `skill/exec-summary/SKILL.md`, `references/*` (fixes only)

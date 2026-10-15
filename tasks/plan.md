@@ -76,7 +76,7 @@ T1 Scaffold
 
 ### Phase C: The skill
 - [x] Task 10: SKILL.md, references and install
-- [ ] Task 11: Live runs through `/exec-summary`
+- [x] Task 11: Live runs through `/exec-summary`
 
 ### Checkpoint C
 - [ ] Success criteria 1, 2, 3, 4 and 6 pass
