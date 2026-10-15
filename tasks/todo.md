@@ -192,7 +192,7 @@ Standard checks used below:
 
 ### - [ ] Task 10: SKILL.md, references and install
 
-**Description:** Write `SKILL.md` (name `exec-summary`, a description that triggers on "/exec-summary" and "executive summary of <files>", and the steps from the spec's How It Works, including the no-paths case and the 3-attempt fix loop). Write `references/writing-guide.md` (plain-language rules, a jargon glossary seeded from the samples, the "Example" label rule, no personal data) and `references/summary-format.md` (field guide with a short example). Write `tools/install.py`, which copies `skill/exec-summary` to `~/.claude/skills/exec-summary` and replaces an older copy only after showing what will change. Add `links.json` read and write to `paths.py`. `SKILL.md` must also carry the notes at the end of `tasks/checkpoint-b-review.md` (limits of the coverage check, path spelling, asking before using design images).
+**Description:** Write `SKILL.md` (name `exec-summary`, a description that triggers on "/exec-summary" and "executive summary of <files>", and the steps from the spec's How It Works, including the no-paths case and the 3-attempt fix loop). Write `references/writing-guide.md` (plain-language rules, a jargon glossary seeded from the samples, the "Example" label rule, no personal data) and `references/summary-format.md` (field guide with a short example). Write `tools/install.py`, which copies `skill/exec-summary` to `~/.claude/skills/exec-summary` and replaces an older copy only after showing what will change. Add `links.json` read and write to `paths.py`. `SKILL.md` must also carry the notes at the end of `tasks/checkpoint-b-review.md` (limits of the coverage check, path spelling, asking before using design images). Write `references/design-rules.md` with the owner's chosen deck standard, and point to it from `SKILL.md`: content comes first, and source info is smaller (12 px), narrower (14% of the table) and lighter; repeated cell values in a table show once, spanning their rows; deck width capped at 1280 px; text sizes at most 22 px body, 18 px small, 44 px titles; calm style, grayscale wireframes, status as text plus color. Tests for these rules already exist in `tests/test_render.py`. Same-named inputs from different folders: the first deck keeps its simple name, a clashing one gets its folder added (`other-SPEC.html`); `links.json` records each deck's input files to detect a clash.
 
 **Acceptance criteria:**
 - [ ] `SKILL.md` names every script with its exact command and says when to stop and ask.
@@ -204,7 +204,7 @@ Standard checks used below:
 - [ ] Manual: install (ask first), then the skill shows up in a new session's skill list
 
 **Dependencies:** Task 9
-**Files:** `skill/exec-summary/SKILL.md`, `references/writing-guide.md`, `references/summary-format.md`, `tools/install.py`, `S/paths.py`, tests
+**Files:** `skill/exec-summary/SKILL.md`, `references/writing-guide.md`, `references/summary-format.md`, `references/design-rules.md`, `tools/install.py`, `S/paths.py`, tests
 **Scope:** M
 
 ### - [ ] Task 11: Live runs through `/exec-summary`

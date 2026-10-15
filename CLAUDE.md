@@ -20,6 +20,10 @@ Local rules for this project only. The parent WAT `CLAUDE.md` in Downloads also 
 - After fixing, re-run each reproduction from the report and the full test suite, and say which findings are confirmed fixed.
 - Still ask first for anything the Boundaries section says to ask about, and for changes to the summary.json format after Checkpoint C.
 
+## Verify before reporting
+- After every fix or edit, check the actual result yourself and confirm it is done before telling the user. Tests passing is not enough for a visual change: open the output (for example the deck in the browser) and look at it.
+- In the report, say what you checked and what you saw. If you could not check something, say so instead of claiming it is done.
+
 ## Token Efficiency
 
 ### 1. Milestone handoff

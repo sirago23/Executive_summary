@@ -879,3 +879,59 @@ def test_other_tables_are_not_merged(data):
     with_tables(data)
     html = render.render_deck(data)
     assert "rowspan" not in html.split('id="s-stack"')[1].split("</section>")[0]
+
+
+def test_success_rows_of_the_same_phase_show_the_phase_once(data):
+    data["success"] = [
+        {"text": f"Goal {i}.", "phase": phase, "src": SRC}
+        for i, phase in enumerate(["Phase 1", "Phase 1", "Phase 1", "Phase 2"])
+    ]
+    html = render.render_deck(data)
+    table = html.split('id="s-success"')[1].split("</section>")[0]
+    assert table.count("Phase 1") == 1 and 'rowspan="3"' in table
+    assert table.count("Phase 2") == 1
+    assert table.count("<tr") - 1 == 4
+    for i in range(4):
+        assert f"Goal {i}." in table
+
+
+def test_success_without_phases_has_no_merged_cells(data):
+    data["success"] = [{"text": "One.", "src": SRC}, {"text": "Two.", "src": SRC}]
+    html = render.render_deck(data)
+    assert "rowspan" not in html.split('id="s-success"')[1].split("</section>")[0]
+
+
+# --- design rules the owner chose: content first, source quiet, width capped ---------------------
+
+
+def css_rule(html: str, selector: str) -> str:
+    match = re.search(re.escape(selector) + r"\s*\{([^}]*)\}", html)
+    assert match, f"no CSS rule for {selector}"
+    return match.group(1)
+
+
+def test_every_table_with_sources_ends_with_a_quiet_source_column(data):
+    with_tables(data)
+    with_plan(data)
+    html = render.render_deck(data)
+    assert "<th>Source</th>" not in html
+    sourced = [t for t in re.findall(r"<table.*?</table>", html, flags=re.S) if "Source" in t]
+    assert len(sourced) >= 5
+    for table in sourced:
+        header = re.search(r"<thead>.*?</thead>", table, flags=re.S).group(0)
+        assert header.endswith('<th class="src">Source</th></tr></thead>')
+        assert 'class="src"' in table.split("<tbody>")[1]
+
+
+def test_the_source_column_is_narrow_small_and_light(data):
+    html = render.render_deck(data)
+    rule = css_rule(html, "th.src,\ntd.src")
+    assert int(re.search(r"width:\s*(\d+)%", rule).group(1)) <= 14
+    assert float(re.search(r"font-size:\s*([\d.]+)rem", rule).group(1)) <= 0.75
+    assert "font-weight: 400" in rule and "var(--muted)" in rule
+
+
+def test_deck_width_and_text_sizes_stay_at_the_chosen_limits(data):
+    html = render.render_deck(data)
+    assert "max-width: 1280px" in css_rule(html, "#deck")
+    assert "2.75rem)" in html and "1.375rem)" in html and "1.125rem)" in html

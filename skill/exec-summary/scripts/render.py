@@ -116,24 +116,25 @@ def render_stories(data: dict) -> list[Slide]:
     return slides
 
 
-def table_rows(group: list[tuple[list[str], str]], merge_first: bool) -> str:
-    """HTML rows for one slide. With `merge_first`, neighbouring rows that start with the same
-    cell show it once, spanning those rows, and each group starts with a stronger top line."""
+def table_rows(group: list[tuple[list[str], str]], merge_col: int | None) -> str:
+    """HTML rows for one slide. With `merge_col`, neighbouring rows that have the same non-empty
+    cell in that column show it once, spanning those rows, and each group starts with a
+    stronger top line."""
     out = []
     for index, (cells, src) in enumerate(group):
-        previous = group[index - 1][0][0] if index else None
-        merged = merge_first and cells[0] == previous
-        start = merge_first and not merged
-        shown = cells[1:] if merged else cells
-        tds = "".join(f"<td>{cell}</td>" for cell in shown)
-        if start:
+        tds = ""
+        start = merge_col is not None
+        for column, cell in enumerate(cells):
+            if merge_col != column or not cell:
+                tds += f"<td>{cell}</td>"
+                continue
+            if index and group[index - 1][0][column] == cell:
+                start = False
+                continue
             span = 1
-            while index + span < len(group) and group[index + span][0][0] == cells[0]:
+            while index + span < len(group) and group[index + span][0][column] == cell:
                 span += 1
-            if span > 1:
-                tds = f'<td rowspan="{span}">{cells[0]}</td>' + "".join(
-                    f"<td>{cell}</td>" for cell in cells[1:]
-                )
+            tds += f'<td rowspan="{span}">{cell}</td>' if span > 1 else f"<td>{cell}</td>"
         row_class = ' class="group-start"' if start else ""
         out.append(f'<tr{row_class}>{tds}<td class="src">{esc(src)}</td></tr>')
     return "".join(out)
@@ -144,14 +145,14 @@ def table_slides(
     title: str,
     headers: list[str],
     rows: list[tuple[list[str], str]],
-    merge_first: bool = False,
+    merge_col: int | None = None,
 ) -> list[Slide]:
     """Slides for a table. Each row is (cells as escaped HTML, src). A source column is added,
     and the table continues on another slide after ROWS_PER_SLIDE rows."""
     if not rows:
         return []
-    head = "".join(f"<th>{esc(h)}</th>" for h in [*headers, "Source"])
-    table_class = ' class="grouped"' if merge_first else ""
+    head = "".join(f"<th>{esc(h)}</th>" for h in headers) + '<th class="src">Source</th>'
+    table_class = ' class="grouped"' if merge_col is not None else ""
     slides = []
     for page, group in enumerate(chunks(rows, ROWS_PER_SLIDE), start=1):
         id_suffix, title_suffix = suffix(page)
@@ -161,7 +162,7 @@ def table_slides(
                 f"{slide_id}{id_suffix}",
                 shown,
                 f"<h2>{esc(shown)}</h2><table{table_class}><thead><tr>{head}</tr></thead>"
-                f"<tbody>{table_rows(group, merge_first)}</tbody></table>",
+                f"<tbody>{table_rows(group, merge_col)}</tbody></table>",
             )
         )
     return slides
@@ -174,7 +175,7 @@ def render_criteria(data: dict) -> list[Slide]:
         for criterion in s.get("criteria", [])
     ]
     return table_slides(
-        "criteria", "How we will know it works", ["Story", "It works when"], rows, merge_first=True
+        "criteria", "How we will know it works", ["Story", "It works when"], rows, merge_col=0
     )
 
 
@@ -310,7 +311,8 @@ def task_block(title: str, tasks: list[dict]) -> str:
     )
     return (
         f"<h3>{esc(title)}</h3><table><thead><tr><th>Task</th><th>What you will see working</th>"
-        f"<th>Source</th></tr></thead><tbody>{rows}</tbody></table>"
+        f'<th class="src">Source</th></tr></thead>'
+        f"<tbody>{rows}</tbody></table>"
     )
 
 
@@ -402,7 +404,9 @@ def render_success(data: dict) -> list[Slide]:
         for s in items
     ]
     headers = ["Success looks like"] + (["Phase"] if with_phase else [])
-    return table_slides("success", "How we measure success", headers, rows)
+    return table_slides(
+        "success", "How we measure success", headers, rows, merge_col=1 if with_phase else None
+    )
 
 
 def render_notes(data: dict) -> list[Slide]:
