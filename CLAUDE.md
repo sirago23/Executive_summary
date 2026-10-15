@@ -4,7 +4,15 @@ Local rules for this project only. The parent WAT `CLAUDE.md` in Downloads also 
 
 ## Project
 - Name: Executive summary skill
-- Purpose, stack and commands: not defined yet. Fill in after `/agent-skills:spec` and `/agent-skills:plan`.
+- Purpose: the `exec-summary` Claude Code skill. It turns planning files (spec, plan, todo) into a plain-language slide deck for a non-programmer owner, published as a private Artifact. Details: `SPEC.md`, plan: `tasks/plan.md`, tasks: `tasks/todo.md`, usage: `README.md`.
+- Stack: Python 3.10+, standard library only inside `skill/`. Dev tools (`ruff`, `pytest`, `pytest-cov`) are in `requirements-dev.txt`. The deck is one HTML file; Mermaid is its only external script.
+- Commands:
+  - Tests: `python -m pytest -q` (coverage: `python -m pytest --cov`, must stay at 85% or more)
+  - Lint: `python -m ruff check .` and `python -m ruff format --check .`
+  - Install the skill: `python tools/install.py [--dry-run] [--yes]`
+  - Render a deck: `python skill/exec-summary/scripts/render.py <summary.json>`
+  - All script commands: see `SPEC.md` > Commands.
+- The `summary.json` format is frozen since Checkpoint C; changing it needs the owner's approval.
 - Repo: https://github.com/sirago23/Executive_summary (public, branch `main`).
 
 ## Boundaries

@@ -83,7 +83,7 @@ T1 Scaffold
 - [x] Owner reads the full deck (success criterion 5)
 
 ### Phase D: Finish
-- [ ] Task 12: Accessibility, mobile, print, coverage and README
+- [x] Task 12: Accessibility, mobile, print, coverage and README
 
 ### Checkpoint: Done
 - [ ] Spec success criteria 1-8 all pass

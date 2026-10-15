@@ -237,7 +237,7 @@ Standard checks used below:
 
 ## Phase D: Finish
 
-### - [ ] Task 12: Accessibility, mobile, print, coverage and README
+### - [x] Task 12: Accessibility, mobile, print, coverage and README
 
 **Description:** Check every slide type against the spec's Design Direction: WCAG AA contrast in both themes, keyboard navigation and visible focus, 360 px layout, and a print stylesheet with one slide per page. Bring `S` coverage to at least 85%. Write `README.md` (what it does, install, usage with examples, the spec-only and full workflows, where outputs go).
 
@@ -248,7 +248,7 @@ Standard checks used below:
 
 **Verification:**
 - [x] `CHECKS` pass
-- [ ] Manual: print preview, 360 px and dark mode check with the user
+- [x] Manual: print preview, 360 px and dark mode check with the user (owner approved 2026-10-15)
 
 **Dependencies:** Task 11
 **Files:** `deck.css`, `deck.js`, tests, `README.md`
