@@ -75,7 +75,7 @@ T1 Scaffold
 - [x] Code review and security review done, findings fixed or logged
 
 ### Phase C: The skill
-- [ ] Task 10: SKILL.md, references and install
+- [x] Task 10: SKILL.md, references and install
 - [ ] Task 11: Live runs through `/exec-summary`
 
 ### Checkpoint C

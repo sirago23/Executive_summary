@@ -43,8 +43,8 @@ The output is one self-contained `.html` file, published as a private Claude Art
 - **Tables:** Phases and checkpoints, tech stack (each choice with a plain explanation), risks, decisions already made, out of scope, and "what the AI will ask you before doing".
 - **Review aid:** A final "Please check" slide lists the checkpoints the owner must approve and the open questions. Each item has a checkbox whose state is kept in the viewer's browser only.
 - **Format:** Slide-style sections, one topic per slide, with a contents list, arrow-key navigation and a print layout of one slide per page (so "Print to PDF" works). Readable at 360 px wide and on desktop. Light and dark mode.
-- **Output name:** Derived from the inputs, so different file sets give different decks. One file gives `docs/exec-summary/<file name>.html` (for example `SPEC.html`). Several files give `docs/exec-summary/<name1>+<name2>+....html` in the order given (for example `SPEC+plan+todo.html`). `--out <path>` overrides it, but must end in `.html` and can never be the summary or an input file. Source paths must be relative to the project, without `..`, because the deck shows them.
-- **Publishing:** The HTML is published as a private Claude Artifact. Each output file has its own Artifact link, saved in `docs/exec-summary/links.json` (output path to URL), so re-running on the same files updates the same link, and a spec-only deck and a full deck keep separate links.
+- **Output name:** Derived from the inputs, so different file sets give different decks. One file gives `docs/exec-summary/<file name>.html` (for example `SPEC.html`). Several files give `docs/exec-summary/<name1>+<name2>+....html` in the order given (for example `SPEC+plan+todo.html`). `--out <path>` overrides it, but must end in `.html` and can never be the summary or an input file. Source paths must be relative to the project, without `..`, because the deck shows them. If a deck made from other inputs already has that name (for example `docs/SPEC.md` and `other/SPEC.md`), the first deck keeps its simple name and the later one gets its folders added (`other-SPEC.html`), then a short hash if that is taken too.
+- **Publishing:** The HTML is published as a private Claude Artifact. Each output file has its own Artifact link, saved in `docs/exec-summary/links.json` (output path to `{sources, url}`; the render records the inputs, the publish step saves the URL, and only `https://claude.ai/` links are accepted), so re-running on the same files updates the same link, and a spec-only deck and a full deck keep separate links.
 - **Sources slide:** The title slide lists the files the deck covers, with each file's last-modified date, so the owner knows what they are looking at.
 - **Language:** English.
 - **Size and speed:** The HTML file stays under 2 MB without design images. The scripts finish in under 5 seconds.
@@ -93,11 +93,13 @@ If step 3 or 4 fails, Claude fixes `summary.json` and runs the scripts again, at
 ## Commands
 
 ```
-Install skill:  python tools/install.py            # copy skill/exec-summary to ~/.claude/skills/exec-summary
+Install skill:  python tools/install.py [--dry-run] [--yes]   # copy skill/exec-summary to ~/.claude/skills/exec-summary; an older copy is replaced only with --yes
 Outline:        python skill/exec-summary/scripts/outline.py <file> [<file> ...]
 Validate:       python skill/exec-summary/scripts/validate.py <summary.json>
 Coverage:       python skill/exec-summary/scripts/check_coverage.py <summary.json> <file> [<file> ...]
 Render:         python skill/exec-summary/scripts/render.py <summary.json> [--out <out.html>] [--design-dir <folder> ...]
+Link:           python skill/exec-summary/scripts/paths.py url <deck.html>            # saved Artifact link, if any
+                python skill/exec-summary/scripts/paths.py set-url <deck.html> <url>  # save it after publishing
 Tests:          python -m pytest
 Lint:           ruff check .
 Sample deck:    python -m pytest tests/test_sample.py   # also writes the sample decks to .tmp/sample/
@@ -110,6 +112,7 @@ skill/exec-summary/          # The skill. This folder is what gets installed.
   SKILL.md                   # Trigger, steps, rules for Claude
   references/
     writing-guide.md         # Plain-language rules and a jargon-to-plain glossary
+    design-rules.md          # The owner's deck standard: content first, quiet source column, merged cells, 1280 px
     summary-format.md        # Field-by-field guide to summary.json with a short example
   schema/
     summary.schema.json      # JSON Schema of summary.json
