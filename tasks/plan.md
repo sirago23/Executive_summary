@@ -78,9 +78,9 @@ T1 Scaffold
 - [x] Task 10: SKILL.md, references and install
 - [x] Task 11: Live runs through `/exec-summary`
 
-### Checkpoint C
-- [ ] Success criteria 1, 2, 3, 4 and 6 pass
-- [ ] Owner reads the full deck (success criterion 5)
+### Checkpoint C (approved by the owner 2026-10-15)
+- [x] Success criteria 1, 2, 3, 4 and 6 pass
+- [x] Owner reads the full deck (success criterion 5)
 
 ### Phase D: Finish
 - [ ] Task 12: Accessibility, mobile, print, coverage and README
