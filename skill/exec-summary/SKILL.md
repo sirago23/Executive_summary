@@ -38,7 +38,7 @@ Read these before writing `summary.json`:
 
 ## Steps
 
-1. **Check the inputs.** Paths come after the command, relative to the project or absolute, in any order. Only `.md` and `.txt` files are accepted. A path that does not exist or has another type stops the run: tell the owner which one.
+1. **Check the inputs.** Paths come after the command, in any order. If the owner gives an absolute path to a file inside the project, use its project-relative spelling everywhere (a file outside the project cannot be used). Only `.md` and `.txt` files are accepted. A path that does not exist or has another type stops the run: tell the owner which one.
    - **No paths given:** list likely planning files (Markdown files whose name or first heading mentions spec, plan, todo or tasks) and ask which to use. Never pick for them.
 2. **Outline the files.**
    `python "<skill-dir>/scripts/outline.py" <file> [<file> ...]`
@@ -54,7 +54,7 @@ Read these before writing `summary.json`:
 6. **Design images (optional).** If the project has design images (for example in `design/`, `docs/design/` or `mockups/`), ask the owner whether to use them. If yes, pass the folder with `--design-dir <folder>` in step 7. Only folders the owner names are read; never search for them. Tell the owner that embedded images are **not checked for personal data**. Without images, the deck draws 2-4 grayscale wireframes from `screens`, labelled as examples.
 7. **Render.**
    `python "<skill-dir>/scripts/render.py" <summary> [--out <path.html>] [--design-dir <folder>]`
-   The deck is written to `docs/exec-summary/<name>.html` and the path is printed. The name follows the inputs: one file gives `SPEC.html`, several give `SPEC+plan+todo.html` in the order given. If another deck made from different inputs already has that name, the folders are added (`other-SPEC.html`); the first deck keeps its simple name. `--out` must end in `.html` and can never be the summary or an input file. The render also records the deck's inputs in `docs/exec-summary/links.json`.
+   The deck is written to `docs/exec-summary/<name>.html` and the path is printed. The name follows the inputs: one file gives `SPEC.html`, several give `SPEC+plan+todo.html` in the order given. If that name is already used by a deck made from different inputs, or by a file that is not recorded in `links.json`, the folders are added (`other-SPEC.html`), then a short hash, then a counter; the first deck keeps its simple name, and the render prints a note when it had to pick another name. Use the printed path, exactly as printed, in the steps below. `--out` must end in `.html`, can never be the summary or an input file, and is refused when it names a deck made from other inputs. The render also records the deck's inputs in `docs/exec-summary/links.json`; if it prints "not recorded", the deck still exists: tell the owner and do not publish until it is recorded.
 8. **Publish (after the owner agrees).** Show the owner the deck path, then publish the finished HTML file as a private Artifact with the Artifact tool. Do not edit or rewrite the HTML.
    - Look up a saved link: `python "<skill-dir>/scripts/paths.py" url <deck path>`. If it prints a link, publish to that same link (pass it as `url`) so the owner's link shows the new version.
    - After a first publish, save the link: `python "<skill-dir>/scripts/paths.py" set-url <deck path> <link>`. Only `https://claude.ai/` links are accepted.
@@ -66,6 +66,8 @@ Read these before writing `summary.json`:
 ## When a script fails
 
 Errors look like `path.to.field: message`, one per line, exit code 1. Fix `summary.json` and run the scripts again, **at most 3 times**. Then stop and show the owner the remaining errors. Never edit a script, a schema or an input file to make a check pass, and never skip a check.
+
+If a script reports a problem with `docs/exec-summary/links.json` (unreadable, wrong shape, "in use by another run"), do not edit, delete or recreate it: it holds the owner's saved links. Report the message to the owner. A lock that is "in use" clears by itself after a minute.
 
 ## What the checks cover, and what they do not
 

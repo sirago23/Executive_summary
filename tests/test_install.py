@@ -1,6 +1,11 @@
+import os
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import install
+import pytest
 
 
 def make_source(root: Path) -> Path:
@@ -96,10 +101,83 @@ def test_the_default_destination_is_under_the_home_skills_folder(tmp_path):
 
 
 def test_the_real_skill_folder_installs(tmp_path):
-    # Real skill folder to a temp folder: shows what would be installed, writes nothing real.
+    # Real skill folder to a temp folder: nothing real is written.
     dest = tmp_path / "exec-summary"
     real = Path(install.__file__).resolve().parent.parent / "skill" / "exec-summary"
-    if (real / "SKILL.md").exists():
-        assert install.main(["--dest", str(dest)], source=real) == 0
-        assert (dest / "scripts" / "render.py").is_file()
-        assert (dest / "templates" / "deck.css").is_file()
+    assert (real / "SKILL.md").is_file()
+    assert install.main(["--dest", str(dest)], source=real) == 0
+    assert (dest / "scripts" / "render.py").is_file()
+    assert (dest / "templates" / "deck.css").is_file()
+    assert (dest / "references" / "design-rules.md").is_file()
+
+
+def make_link(link: Path, target: Path) -> None:
+    """A link to a folder or file. Symlinks need a privilege on Windows, so a folder falls back
+    to a junction; a file link that cannot be made skips the test."""
+    try:
+        os.symlink(target, link, target_is_directory=target.is_dir())
+    except OSError:
+        if target.is_dir() and sys.platform == "win32":
+            subprocess.run(
+                ["cmd", "/c", "mklink", "/J", str(link), str(target)],
+                check=True,
+                capture_output=True,
+            )
+        else:
+            pytest.skip("cannot create a link here")
+
+
+def test_a_name_that_differs_only_in_case_is_replaced_not_added_and_removed(tmp_path, capsys):
+    src, dest = make_source(tmp_path), tmp_path / "exec-summary"
+    dest.mkdir()
+    (dest / "skill.md").write_text("old", encoding="utf-8")
+    assert run(src, dest, "--yes") == 0
+    assert sorted(os.listdir(dest)) == ["SKILL.md", "scripts"]
+    assert (dest / "SKILL.md").read_text(encoding="utf-8").startswith("---")
+    assert "remove: skill.md" not in capsys.readouterr().out
+
+
+def test_a_linked_folder_inside_the_destination_is_refused_and_nothing_outside_changes(
+    tmp_path, capsys
+):
+    src, dest = make_source(tmp_path), tmp_path / "exec-summary"
+    run(src, dest)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "render.py").write_text("PRECIOUS", encoding="utf-8")
+    (outside / "keep.txt").write_text("PRECIOUS", encoding="utf-8")
+    shutil.rmtree(dest / "scripts")
+    make_link(dest / "scripts", outside)
+    (src / "scripts" / "render.py").write_text("print('new')", encoding="utf-8")
+    assert run(src, dest, "--yes") == 1
+    assert "link" in capsys.readouterr().err
+    assert (outside / "render.py").read_text(encoding="utf-8") == "PRECIOUS"
+    assert (outside / "keep.txt").read_text(encoding="utf-8") == "PRECIOUS"
+
+
+def test_a_linked_file_inside_the_destination_is_refused(tmp_path, capsys):
+    src, dest = make_source(tmp_path), tmp_path / "exec-summary"
+    dest.mkdir()
+    victim = tmp_path / "victim.txt"
+    victim.write_text("PRECIOUS", encoding="utf-8")
+    make_link(dest / "SKILL.md", victim)
+    assert run(src, dest, "--yes") == 1
+    assert "link" in capsys.readouterr().err
+    assert victim.read_text(encoding="utf-8") == "PRECIOUS"
+
+
+def test_a_destination_that_is_a_file_is_refused_with_a_message(tmp_path, capsys):
+    src, dest = make_source(tmp_path), tmp_path / "exec-summary"
+    dest.write_text("i am a file", encoding="utf-8")
+    assert run(src, dest) == 1
+    assert "not a folder" in capsys.readouterr().err
+    assert dest.read_text(encoding="utf-8") == "i am a file"
+
+
+def test_a_destination_that_overlaps_the_source_is_refused(tmp_path, capsys):
+    src = make_source(tmp_path)  # already named exec-summary
+    assert run(src, src) == 1
+    inside = src / "scripts" / "exec-summary"
+    assert run(src, inside) == 1
+    assert capsys.readouterr().err.count("overlaps") == 2
+    assert not inside.exists()

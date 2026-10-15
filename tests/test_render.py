@@ -984,3 +984,45 @@ def test_cli_stops_on_a_broken_links_file_and_writes_no_deck(tmp_path, data):
     assert result.returncode == 1 and "links.json" in result.stderr
     assert not (folder / "SPEC.html").exists()
     assert (folder / "links.json").read_text(encoding="utf-8") == "{broken"
+
+
+# --- review fixes: never overwrite another deck, tell the owner about a rename ---------------
+
+
+def test_cli_does_not_overwrite_a_deck_that_is_not_in_links_json_and_says_why(tmp_path, data):
+    folder = tmp_path / "docs" / "exec-summary"
+    folder.mkdir(parents=True)
+    (folder / "SPEC.html").write_text("MINE, made earlier", encoding="utf-8")
+    name = summary_for(tmp_path, data, "other/SPEC.md", "b.json")
+    result = run_cli(tmp_path, name)
+    assert result.returncode == 0, result.stderr
+    assert (folder / "SPEC.html").read_text(encoding="utf-8") == "MINE, made earlier"
+    assert (folder / "other-SPEC.html").is_file()
+    assert "SPEC.html" in result.stderr and "wrote" in result.stderr
+    assert result.stdout.strip().endswith("other-SPEC.html")
+
+
+def test_cli_out_onto_a_deck_of_other_inputs_is_refused_and_its_link_is_kept(tmp_path, data):
+    first = summary_for(tmp_path, data, "docs/SPEC.md", "a.json")
+    assert run_cli(tmp_path, first).returncode == 0
+    links_file = tmp_path / "docs" / "exec-summary" / "links.json"
+    links = json.loads(links_file.read_text(encoding="utf-8"))
+    links["docs/exec-summary/SPEC.html"]["url"] = "https://claude.ai/artifact/AAA"
+    links_file.write_text(json.dumps(links), encoding="utf-8")
+    second = summary_for(tmp_path, data, "other/SPEC.md", "b.json")
+    result = run_cli(tmp_path, second, "--out", "docs/exec-summary/SPEC.html")
+    assert result.returncode == 1 and "already holds a deck" in result.stderr
+    after = json.loads(links_file.read_text(encoding="utf-8"))
+    assert after["docs/exec-summary/SPEC.html"]["url"] == "https://claude.ai/artifact/AAA"
+    assert after["docs/exec-summary/SPEC.html"]["sources"] == ["docs/SPEC.md"]
+
+
+def test_cli_still_prints_the_deck_path_when_links_json_cannot_be_saved(tmp_path, data):
+    name = summary_for(tmp_path, data, "SPEC.md", "a.json")
+    folder = tmp_path / "docs" / "exec-summary"
+    folder.mkdir(parents=True)
+    (folder / "links.json.lock").write_text("", encoding="utf-8")  # another run is writing
+    result = run_cli(tmp_path, name)
+    assert result.returncode == 1
+    assert "SPEC.html" in result.stderr and "not recorded" in result.stderr
+    assert (folder / "SPEC.html").is_file()

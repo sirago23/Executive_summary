@@ -230,7 +230,7 @@ Standard checks used below:
 ### - [ ] Checkpoint C
 - [ ] Success criteria 1, 2, 3, 4 and 6 pass
 - [ ] Success criterion 5: the owner reads the full deck and confirms they understand it without asking about terms
-- [ ] `agent-skills:code-reviewer` run, and findings are fixed or logged
+- [x] `agent-skills:code-reviewer` run, and findings are fixed or logged (see `tasks/checkpoint-c-review.md`)
 - [ ] `summary.json` format is frozen from here (changes need approval)
 
 ---

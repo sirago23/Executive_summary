@@ -18,7 +18,15 @@ from string import Template
 from common import esc, load_json
 from design_images import find_design_images
 from mermaid import to_flowchart
-from paths import LINKS_FILE, check_out_path, pick_output, read_links, register_deck
+from paths import (
+    LINKS_FILE,
+    check_out_free,
+    check_out_path,
+    output_path,
+    pick_output,
+    read_links,
+    register_deck,
+)
 from validate import validate
 from wireframe import render_wireframe
 
@@ -549,9 +557,16 @@ def main(argv: list[str]) -> int:
     if problem:
         print(problem, file=sys.stderr)
         return 1
-    out = pick_output(sources, links, args.out)
+    try:
+        out = pick_output(sources, links, args.out, exists=Path.exists)
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 1
     protected = [Path(args.summary), *(Path(s["path"]) for s in data["sources"])]
     problems = check_out_path(out, protected)
+    if args.out:
+        taken = check_out_free(links, out, sources)
+        problems += [taken] if taken else []
     if problems:
         print("\n".join(problems), file=sys.stderr)
         return 1
@@ -564,11 +579,19 @@ def main(argv: list[str]) -> int:
             print(f"design image ignored: {note}", file=sys.stderr)
         if left_out:
             print(f"design images left out for size: {left_out}", file=sys.stderr)
+    simple = output_path(sources)
+    if not args.out and out != simple:
+        print(
+            f"note: {simple} already exists or belongs to other inputs; "
+            f"wrote the deck to {out} instead",
+            file=sys.stderr,
+        )
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding="utf-8", newline="\n")
     problem = register_deck(LINKS_FILE, out, sources)
     if problem:
-        print(problem, file=sys.stderr)
+        print(f"deck written to {out} but not recorded in links.json: {problem}", file=sys.stderr)
+        print(out)
         return 1
     print(out)
     return 0
