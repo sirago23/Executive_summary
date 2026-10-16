@@ -688,21 +688,94 @@ html:not(.js) .diagram-fallback[hidden] {
 }
 
 .card {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  display: grid;
+  gap: 10px;
+  align-content: start;
   padding: var(--gap);
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.card .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
 }
 
 .card .id {
-  display: inline-block;
-  margin-bottom: 8px;
+  padding: 2px 8px;
   font-size: var(--fs-small);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+}
+
+.card .as {
+  font-size: var(--fs-small);
+  color: var(--muted);
 }
 
 .card p {
-  margin-bottom: 0;
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.38;
+}
+
+.card p.src {
+  margin: 0;
+  font-weight: 400;
+}
+
+.rows {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.risk {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 14%;
+  gap: 4px var(--gap);
+  align-items: start;
+  padding: 14px var(--gap);
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.risk .impact {
+  justify-self: start;
+  font-size: var(--fs-small);
+}
+
+.risk strong {
+  display: block;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.risk .how {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.risk .src {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 719px) {
+  .risk {
+    grid-template-columns: 1fr;
+  }
 }
 
 table {
@@ -823,7 +896,9 @@ table.grouped td[rowspan] {
   }
 
   .stat,
-  .pill {
+  .pill,
+  .card,
+  .risk {
     border: 1px solid var(--line);
   }
 

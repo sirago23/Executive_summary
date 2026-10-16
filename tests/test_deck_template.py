@@ -261,3 +261,21 @@ def test_print_shows_every_slide_one_per_page_in_light_colours():
 
 def test_motion_is_switched_off_when_the_reader_asks_for_less():
     assert "@media (prefers-reduced-motion: reduce)" in CSS
+
+
+def test_cards_and_risk_rows_sit_on_the_card_colour_with_rounded_corners():
+    for selector in (".card {", ".risk {", ".stat {"):
+        rule = block(selector)
+        assert "background: var(--card)" in rule, selector
+        assert "border-radius: var(--radius)" in rule, selector
+
+
+def test_the_impact_badge_has_a_dot_in_front_of_its_word():
+    assert re.search(r"\.impact::before \{[^}]*content:", CSS)
+
+
+def test_print_gives_cards_and_risk_rows_a_hairline_because_paper_drops_backgrounds():
+    printed = CSS[CSS.index("@media print") :]
+    border = re.search(r"([^{}]+)\{\s*border:\s*1px solid var\(--line\)", printed).group(1)
+    for selector in (".card", ".risk", ".stat"):
+        assert selector in border

@@ -318,26 +318,28 @@ Slides taller than the 560 px slide area at 1280 x 650 (page height is 650; heig
 
 **Result (2026-10-16):** The title slide is a pill ("Executive summary · status"), the project name (up to 84 px, this slide only), the tagline, up to 4 tiles and a footer. Tiles are counted in `render.py` (`stat_counts`), singular for 1, zeros skipped. The footer lists each file with its last-changed date and contents, so the old "This summary covers" table is gone and no information was dropped. The glow is the only `radial-gradient`, on `#s-title`, and print drops it. Tests: 330 passed, coverage 87%, ruff clean. Seen in the browser: full deck shows 7 user stories, 5 delivery phases, 17 tasks, 5 checkpoints you approve (light and dark at 1280 x 650); spec-only deck shows 7 user stories and 17 acceptance criteria, no phase or task tile; at 360 px two columns of tiles, no sideways scroll. A first 360 px look found the phone rule losing to the base rule (four narrow columns); fixed and covered by a test.
 
-### - [ ] Checkpoint E1
-- [ ] `CHECKS` pass
-- [ ] Claude's browser check of the frame, the bar, a table slide and the title slide in light and dark (no owner review here, by the owner's choice on 2026-10-16; Claude continues to Task 15)
+### - [x] Checkpoint E1
+- [x] `CHECKS` pass
+- [x] Claude's browser check of the frame, the bar, a table slide and the title slide in light and dark (no owner review here, by the owner's choice on 2026-10-16; Claude continues to Task 15)
 
-### - [ ] Task 15: Stories and risks as cards
+### - [x] Task 15: Stories and risks as cards
 
 **Description:** Stories become cards in a 2-column grid: the "S1" pill, the "As <who>, I want" label and the want text in semi-bold. Risks become row cards: an impact badge (dot plus the word High / Med / Low, coloured with `--hi` / `--med` / `--lo` on their `-bg` tokens), the risk in semi-bold, the handling in muted text below and the source on the right.
 
 **Acceptance criteria:**
-- [ ] Both slides match the preview in light and dark; the impact word is always visible (not colour alone).
-- [ ] Badge text meets AA on its badge background in light, dark and print (new contrast test).
-- [ ] Source text, escaping and "(continued)" splitting work as before (existing tests pass, new markup tests added).
+- [x] Both slides match the preview in light and dark; the impact word is always visible (not colour alone).
+- [x] Badge text meets AA on its badge background in light, dark and print (new contrast test).
+- [x] Source text, escaping and "(continued)" splitting work as before (existing tests pass, new markup tests added).
 
 **Verification:**
-- [ ] `CHECKS` pass
-- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): stories and risks slides of the full sample deck at 1280 × 650 and 360 px
+- [x] `CHECKS` pass
+- [x] Claude's browser check (Playwright screenshots, looked at before reporting): stories and risks slides of the full sample deck at 1280 × 650 and 360 px
 
 **Dependencies:** Task 13
 **Files:** `S/render.py`, `T/deck.css`, `tests/test_render.py`, `tests/test_deck_template.py`
 **Scope:** M
+
+**Result (2026-10-16):** Stories are cards in a 2-column grid (id pill, "As <who>, I want" label, the want text in semi-bold, source quiet below). Risks are row cards (impact badge with dot and word, risk in semi-bold, handling in muted text, source on the right) in a list, no table, 5 per slide (`RISKS_PER_SLIDE`, new) with "(continued)". The existing story-sentence test now checks the visible text, because the sentence is split across two elements on purpose. The impact contrast test from Task 13 already covers the badge in light, dark and print; print gives cards, risk rows and tiles a hairline border. Tests: 337 passed, coverage 87%, ruff clean. Seen in the browser at 1280 x 650 (light and dark): stories 568 of 560 px, risks 568 of 560 px, so each scrolls 8 px inside its frame; Task 18 tunes the limits. At 360 px: risk rows stack, no sideways scroll. The full deck is now 36 slides (risks continue on a second slide).
 
 ### - [ ] Task 16: Phases, tasks, checkpoints and "please check"
 

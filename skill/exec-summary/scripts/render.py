@@ -35,6 +35,7 @@ STORIES_PER_SLIDE = 6
 ROWS_PER_SLIDE = 8
 WIREFRAMES_PER_SLIDE = 2
 STEPS_PER_SLIDE = 6
+RISKS_PER_SLIDE = 5
 TASK_SLIDE_BUDGET = 10  # rows on one tasks slide; each phase title counts as one row
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
@@ -124,11 +125,12 @@ def render_goal(data: dict) -> list[Slide]:
     return [("goal", "The goal", f"<h2>The goal</h2>{body}{src_note(goal['src'])}")]
 
 
-def story_sentence(story: dict) -> str:
+def story_want(story: dict) -> str:
+    """What the story wants, with its reason: the part of the sentence after "I want"."""
     want = story["want"].strip().rstrip(".")
     so = story.get("so", "").strip().rstrip(".")
     ending = f", so that {esc(so)}" if so else ""
-    return f"As {esc(story['as'].strip())}, I want {esc(want)}{ending}."
+    return f"{esc(want)}{ending}."
 
 
 def render_stories(data: dict) -> list[Slide]:
@@ -140,9 +142,10 @@ def render_stories(data: dict) -> list[Slide]:
         id_suffix, title_suffix = suffix(page)
         title = f"What you can do{title_suffix}"
         cards = "".join(
-            '<div class="card">'
+            '<div class="card"><div class="row">'
             f'<span class="id">{esc(s["id"])}</span>'
-            f"<p>{story_sentence(s)}</p>"
+            f'<span class="as">As {esc(s["as"].strip())}, I want</span></div>'
+            f"<p>{story_want(s)}</p>"
             f"{src_note(s['src'])}"
             "</div>"
             for s in group
@@ -387,21 +390,26 @@ def render_checkpoints(data: dict) -> list[Slide]:
     return table_slides("checkpoints", "Checkpoints you approve", ["Checkpoint", "You check"], rows)
 
 
-def render_risks(data: dict) -> list[Slide]:
-    rows = [
-        (
-            [
-                esc(r["risk"]),
-                f'<span class="impact impact-{esc(r["impact"].lower())}">{esc(r["impact"])}</span>',
-                esc(r["handling"]),
-            ],
-            r["src"],
-        )
-        for r in data.get("risks", [])
-    ]
-    return table_slides(
-        "risks", "Risks and how they are handled", ["Risk", "Impact", "Handled by"], rows
+def risk_row(r: dict) -> str:
+    return (
+        '<li class="risk">'
+        f'<span class="impact impact-{esc(r["impact"].lower())}">{esc(r["impact"])}</span>'
+        f'<div><strong>{esc(r["risk"])}</strong><span class="how">{esc(r["handling"])}</span></div>'
+        f'<span class="src">{esc(r["src"])}</span>'
+        "</li>"
     )
+
+
+def render_risks(data: dict) -> list[Slide]:
+    slides = []
+    for page, group in enumerate(chunks(data.get("risks", []), RISKS_PER_SLIDE), start=1):
+        id_suffix, title_suffix = suffix(page)
+        title = f"Risks and how they are handled{title_suffix}"
+        rows = "".join(risk_row(r) for r in group)
+        slides.append(
+            (f"risks{id_suffix}", title, f'<h2>{esc(title)}</h2><ul class="rows">{rows}</ul>')
+        )
+    return slides
 
 
 RULE_GROUPS = [("always", "Always"), ("ask_first", "Asks you first"), ("never", "Never")]

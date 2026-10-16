@@ -814,6 +814,57 @@ def test_risk_impact_is_text_as_well_as_color(data):
     assert '<span class="impact impact-low">Low</span>' in html
 
 
+def risk_slides(html: str) -> list[str]:
+    parts = re.split(r'(?=<section class="slide" id="s-)', html)
+    return [p for p in parts if p.startswith('<section class="slide" id="s-risks')]
+
+
+def test_a_story_is_a_card_with_an_id_pill_a_label_and_the_want_in_its_own_line(data):
+    html = render.render_deck(data)
+    story = data["stories"][0]
+    card = re.search(r'<div class="card"><div class="row">.*?</div></div>', html, flags=re.S).group(
+        0
+    )
+    assert f'<span class="id">{story["id"]}</span>' in card
+    assert f'<span class="as">As {render.esc(story["as"].strip())}, I want</span>' in card
+    assert "<p>to upload a bank slip image" in card
+    assert 'class="src"' in card
+
+
+def test_risks_are_row_cards_with_the_impact_word_first_and_no_table(data):
+    html = render.render_deck(with_plan(data))
+    slide = risk_slides(html)[0]
+    assert "<table" not in slide
+    assert slide.count('<li class="risk">') == 2
+    first = slide.split('<li class="risk">')[1]
+    assert first.startswith('<span class="impact impact-high">High</span>')
+    assert "<strong>Reading slips fails.</strong>" in first
+    assert '<span class="how">Confirm by hand.</span>' in first
+    assert f'<span class="src">{SRC.replace(">", "&gt;")}</span>' in first
+
+
+def test_many_risks_continue_on_more_slides_and_none_is_lost(data):
+    with_plan(data)
+    base = data["risks"][0]
+    data["risks"] = [dict(base, risk=f"Risk number {i}.") for i in range(13)]
+    html = render.render_deck(data)
+    slides = risk_slides(html)
+    assert len(slides) == 3
+    assert "(continued)" in slides[1] and "(continued)" in slides[2]
+    for i in range(13):
+        assert html.count(f"Risk number {i}.") == 1
+
+
+def test_risk_text_and_source_are_escaped_in_the_cards(data):
+    evil = "<script>alert(1)</script>"
+    with_plan(data)
+    data["risks"][0]["risk"] = evil
+    data["risks"][0]["handling"] = evil
+    html = render.render_deck(data)
+    assert "<script>alert(1)" not in html
+    assert risk_slides(html)[0].count("&lt;script&gt;") == 2
+
+
 def test_plan_slides_are_dropped_when_absent(data):
     ids = slide_ids(render.render_deck(data))
     for sid in ["phases", "tasks", "checkpoints", "risks"]:
@@ -856,9 +907,11 @@ def test_plan_validation(data, edit, message):
 def test_a_story_without_so_reads_as_a_plain_sentence(data):
     del data["stories"][0]["so"]
     html = render.render_deck(data)
+    card = re.search(r'<div class="card">.*?</p>', html, flags=re.S).group(0)
+    text = " ".join(re.sub(r"<[^>]+>", " ", card).split())  # what the reader sees
     assert (
         "I want to upload a bank slip image and get a filled-in record I can confirm in one click."
-        in html
+        in text
     )
     assert "so that None" not in html
 
