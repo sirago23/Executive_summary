@@ -274,23 +274,30 @@ Spec: [SPEC-redesign.md](../SPEC-redesign.md) (approved 2026-10-16). Plan: [plan
 
 ## Phase E: Keynote look
 
-### - [ ] Task 13: Keynote tokens, slide frame, top bar and tables
+### - [x] Task 13: Keynote tokens, slide frame, top bar and tables
 
 **Description:** Replace the colour tokens in `T/deck.css` with the Keynote set from the spec (light and dark, every token defined first on `:root`). Restyle the slide frame (14 px corners, one soft shadow, `--surface` slide on `--bg`), the top bar (pill buttons, counter, Contents, dark mode switch) and every table (hairline rows, no zebra stripes, small uppercase headers). Make the active slide fill the window below the bar, at most 1280 px wide, and scroll inside itself if its content is taller. Then measure both sample decks at 1280 × 650 and write down every slide that is too tall, so Task 18 knows what to split.
 
 **Acceptance criteria:**
-- [ ] Every slide type picks up the new tokens in light and dark, with no colour left from the old palette.
-- [ ] Contrast tests in `tests/test_deck_template.py` check the new tokens and still require WCAG AA (body, muted, source text, impact text) in light, dark and print.
-- [ ] On a desktop window the page itself never scrolls; a too-tall slide scrolls inside its frame, and the bar stays put.
-- [ ] A list of slides taller than 650 px (deck, slide id, height) is written in this task's Result note.
+- [x] Every slide type picks up the new tokens in light and dark, with no colour left from the old palette.
+- [x] Contrast tests in `tests/test_deck_template.py` check the new tokens and still require WCAG AA (body, muted, source text, impact text) in light, dark and print.
+- [x] On a desktop window the page itself never scrolls; a too-tall slide scrolls inside its frame, and the bar stays put.
+- [x] A list of slides taller than 650 px (deck, slide id, height) is written in this task's Result note.
 
 **Verification:**
-- [ ] `CHECKS` pass
-- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): both sample decks at 1280 × 650 in light and dark; a table slide and the bar look like the preview
+- [x] `CHECKS` pass
+- [x] Claude's browser check (Playwright screenshots, looked at before reporting): both sample decks at 1280 × 650 in light and dark; a table slide and the bar look like the preview
 
 **Dependencies:** None (v1 done)
 **Files:** `T/deck.css`, `T/deck.html`, `tests/test_deck_template.py`, `tests/test_render.py`
 **Scope:** M
+
+**Result (2026-10-16):** Keynote tokens (light, dark, print), 14 px slide frame with one soft shadow, pill bar and buttons, hairline tables with small uppercase headers, impact badges (dot plus word) from the `--hi/--med/--lo` tokens. On a desktop window the page never scrolls: the bar stays put and the active slide scrolls inside its frame. The source column's 0.85 opacity was dropped, because muted text at that opacity was under AA (4.43 on white, 4.21 on a card); source stays 12 px, weight 400, `--muted`. Tests: 316 passed, coverage 87%, ruff clean. Seen in the browser at 1280 x 650, light and dark: criteria table and risks slide look like the preview.
+
+Slides taller than the 560 px slide area at 1280 x 650 (page height is 650; heights are the slide's scroll height), for Task 18 to split or tune:
+- Full deck (35 slides, 16 tall): stories 673, criteria 643, criteria-2 657, screens 703, screens-2 783, architecture 589, flow 936, stack 582, tasks 893, tasks-2 734, risks 612, rules 946, decisions 717, decisions-2 582, out-of-scope 582, success 595.
+- Spec-only deck (25 slides, 12 tall): stories 673, criteria 643, criteria-2 657, screens 703, screens-2 783, architecture 589, flow 936, stack 582, rules 946, decisions 717, out-of-scope 582, success 595.
+- Card styles in Tasks 14-17 will change these numbers; Task 18 measures again.
 
 ### - [ ] Task 14: Title slide with key-number tiles
 

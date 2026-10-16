@@ -14,7 +14,24 @@ CSS = (TEMPLATES / "deck.css").read_text(encoding="utf-8")
 JS = (TEMPLATES / "deck.js").read_text(encoding="utf-8")
 HTML = (TEMPLATES / "deck.html").read_text(encoding="utf-8")
 
-TOKENS = ("bg", "surface", "text", "muted", "line", "accent", "accent-text")
+TOKENS = (
+    "bg",
+    "surface",
+    "text",
+    "muted",
+    "line",
+    "accent",
+    "accent-text",
+    "accent-soft",
+    "card",
+    "hi",
+    "med",
+    "lo",
+    "hi-bg",
+    "med-bg",
+    "lo-bg",
+)
+LEVELS = ("hi", "med", "lo")
 
 
 def block(selector_start: str) -> str:
@@ -61,8 +78,6 @@ THEMES = {
 
 @pytest.mark.parametrize("theme", THEMES)
 def test_every_theme_defines_every_colour_token(theme):
-    if theme == "print":
-        pytest.skip("print only overrides the colours it needs")
     assert set(TOKENS) <= set(THEMES[theme])
 
 
@@ -75,21 +90,21 @@ def test_body_text_meets_wcag_aa_contrast(theme):
     assert ratio(t["accent-text"], t["accent"]) >= 4.5
 
 
-@pytest.mark.parametrize("theme", ["light", "dark"])
-def test_muted_text_stays_readable_on_the_striped_table_rows(theme):
+@pytest.mark.parametrize("theme", THEMES)
+def test_text_stays_readable_on_cards_tiles_and_pills(theme):
     t = THEMES[theme]
-    stripe = blend(t["line"], t["surface"], 0.25)
-    assert ratio(t["muted"], stripe) >= 4.5
+    for ink in ("text", "muted", "accent"):
+        assert ratio(t[ink], t["card"]) >= 4.5, ink
+    assert ratio(t["accent"], t["accent-soft"]) >= 4.5
 
 
-@pytest.mark.parametrize("theme", ["light", "dark"])
+@pytest.mark.parametrize("theme", THEMES)
 def test_source_column_contrast_after_its_opacity(theme):
     t = THEMES[theme]
-    opacity = float(re.search(r"td\.src \{[^}]*opacity:\s*([0-9.]+)", CSS).group(1))
-    shown = blend(t["muted"], t["surface"], opacity)
-    stripe = blend(t["line"], t["surface"], 0.25)
-    assert ratio(shown, t["surface"]) >= 4.5
-    assert ratio(blend(t["muted"], stripe, opacity), stripe) >= 4.5
+    found = re.search(r"td\.src \{[^}]*opacity:\s*([0-9.]+)", CSS)
+    opacity = float(found.group(1)) if found else 1.0  # none: small and light is enough
+    assert ratio(blend(t["muted"], t["surface"], opacity), t["surface"]) >= 4.5
+    assert ratio(blend(t["muted"], t["card"], opacity), t["card"]) >= 4.5
 
 
 def test_only_the_source_column_may_break_inside_a_word():
@@ -101,19 +116,63 @@ def test_only_the_source_column_may_break_inside_a_word():
     assert "overflow-wrap: anywhere" not in block("th,\ntd {")
 
 
-@pytest.mark.parametrize("level", ["high", "med", "low"])
-@pytest.mark.parametrize("theme", ["light", "dark"])
-def test_impact_colours_meet_aa_on_the_slide_and_on_striped_rows(theme, level):
+@pytest.mark.parametrize("level", LEVELS)
+@pytest.mark.parametrize("theme", THEMES)
+def test_impact_colours_meet_aa_on_the_slide_cards_and_badges(theme, level):
     t = THEMES[theme]
-    selector = (
-        f".impact-{level} {{"
-        if theme == "light"
-        else f':root[data-theme="dark"] .impact-{level} {{'
-    )
-    colour = tokens(block(selector).replace("color:", "--c:"))["c"]
-    stripe = blend(t["line"], t["surface"], 0.25)
-    assert ratio(colour, t["surface"]) >= 4.5
-    assert ratio(colour, stripe) >= 4.5
+    assert ratio(t[level], t["surface"]) >= 4.5
+    assert ratio(t[level], t["card"]) >= 4.5
+    assert ratio(t[level], t[f"{level}-bg"]) >= 4.5
+
+
+def test_impact_levels_take_their_colour_from_the_tokens_in_every_theme():
+    for level, token in (("high", "hi"), ("med", "med"), ("low", "lo")):
+        rule = block(f".impact-{level} {{")
+        assert f"color: var(--{token})" in rule
+        assert f"background: var(--{token}-bg)" in rule
+    assert ".impact-high" not in dark_block() and 'data-theme="dark"] .impact' not in CSS
+
+
+def test_no_colour_is_written_outside_the_token_definitions():
+    stray = [
+        line.strip()
+        for line in CSS.splitlines()
+        if re.search(r"#[0-9a-fA-F]{3,6}\b", line) and not line.strip().startswith("--")
+    ]
+    assert stray == []
+
+
+def test_tables_use_hairlines_and_no_zebra_stripes():
+    assert "nth-child(even)" not in CSS
+    assert "text-transform: uppercase" in block("\nth {")
+
+
+def test_the_slide_is_a_rounded_frame_with_one_soft_shadow():
+    rule = block(".slide {")
+    assert "--radius-slide: 14px" in block(":root {")
+    assert "border-radius: var(--radius-slide)" in rule
+    assert rule.count("box-shadow") == 1
+    screen = CSS[: CSS.index("@media print")]
+    assert screen.count("box-shadow") == 1  # print switches it off
+
+
+def test_the_only_gradients_are_the_wireframe_image_placeholder():
+    """The title-slide glow is added in Task 14; until then no other gradient may appear."""
+    uses = re.findall(r"[a-z-]*gradient\(", CSS)
+    assert uses == ["repeating-linear-gradient("]
+
+
+def test_on_a_desktop_window_the_page_stays_put_and_the_slide_scrolls_inside_itself():
+    desktop = CSS[CSS.index("@media (min-width: 720px)") :]
+    assert re.search(r"\.js body \{[^}]*overflow:\s*hidden", desktop)
+    active = re.search(r"\.js \.slide\.active \{([^}]*)\}", desktop).group(1)
+    assert "overflow-y: auto" in active
+    assert "min-height: 0" in active
+    assert "calc(100vh" not in CSS  # the old "grow past the window" rule is gone
+
+
+def test_buttons_in_the_bar_are_pills():
+    assert "border-radius: 999px" in block("button {")
 
 
 def test_focus_ring_is_visible_and_not_removed():
