@@ -33,13 +33,16 @@ from wireframe import render_wireframe
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
 STORIES_PER_SLIDE = 6
-ROWS_PER_SLIDE = 8
-WIREFRAMES_PER_SLIDE = 2
+ROWS_PER_SLIDE = 6
+WIREFRAMES_PER_SLIDE = 1
 STEPS_PER_SLIDE = 6
-RISKS_PER_SLIDE = 5
+RISKS_PER_SLIDE = 4
 TASK_SLIDE_BUDGET = 5  # rows on one tasks slide; each phase title counts as one row
 TASKS_PER_BLOCK = 4  # tasks of one phase on one slide, so a block fits the budget
-CHECKPOINTS_PER_SLIDE = 4
+CHECKPOINTS_PER_SLIDE = 3
+CHECKS_PER_SLIDE = 5  # tick boxes on one "Please check" slide
+RULE_ITEMS_PER_SLIDE = 9  # rule bullets on one slide; a group is never split
+FLOW_SIDEWAYS_NODES = 4  # a step-by-step flow with more boxes than this is drawn left to right
 LAUNCH_STAGE_CHARS = 280  # text-only slides up to this many characters get the launch stage
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
@@ -329,7 +332,8 @@ def diagram_slides(data: dict, kind: str, slide_id: str) -> list[Slide]:
     shown = [d for d in data.get("diagrams", []) if d["kind"] == kind]
     for page, diagram in enumerate(shown, start=1):
         id_suffix, _ = suffix(page)
-        mermaid_text = to_flowchart(diagram["nodes"], diagram["edges"])
+        sideways = kind == "flow" and len(diagram["nodes"]) > FLOW_SIDEWAYS_NODES
+        mermaid_text = to_flowchart(diagram["nodes"], diagram["edges"], "LR" if sideways else "TB")
         body = (
             f"<h2>{esc(diagram['title'])}</h2>"
             f'<div class="diagram"><pre class="mermaid">{esc(mermaid_text)}</pre>'
@@ -473,16 +477,30 @@ def render_rules(data: dict) -> list[Slide]:
     rules = data.get("rules")
     if not rules:
         return []
-    cards = "".join(
-        f'<div class="card"><h3>{label}</h3><ul>'
-        + "".join(f"<li>{esc(item)}</li>" for item in rules[key])
-        + "</ul></div>"
-        for key, label in RULE_GROUPS
-        if rules.get(key)
-    )
-    title = "Rules the AI follows"
-    body = f'<h2>{title}</h2><div class="cards">{cards}</div>{src_note(rules["src"])}'
-    return [("rules", title, body)]
+    groups = [(key, label) for key, label in RULE_GROUPS if rules.get(key)]
+    pages: list[list[tuple[str, str]]] = []
+    used = 0
+    for group in groups:
+        size = len(rules[group[0]])
+        if pages and used + size <= RULE_ITEMS_PER_SLIDE:
+            pages[-1].append(group)
+            used += size
+        else:
+            pages.append([group])
+            used = size
+    slides = []
+    for page, page_groups in enumerate(pages, start=1):
+        id_suffix, title_suffix = suffix(page)
+        title = f"Rules the AI follows{title_suffix}"
+        cards = "".join(
+            f'<div class="card"><h3>{label}</h3><ul>'
+            + "".join(f"<li>{esc(item)}</li>" for item in rules[key])
+            + "</ul></div>"
+            for key, label in page_groups
+        )
+        body = f'<h2>{title}</h2><div class="cards">{cards}</div>{src_note(rules["src"])}'
+        slides.append((f"rules{id_suffix}", title, body))
+    return slides
 
 
 def render_decisions(data: dict) -> list[Slide]:
@@ -542,19 +560,28 @@ def render_check(data: dict) -> list[Slide]:
         items.append(f"{checkpoint['title']}: {'; '.join(checkpoint['items'])}")
     for question in data.get("open_questions", []):
         items.append(f"Open question: {question}")
-    rows = "".join(
-        "<li><label>"
-        f'<input type="checkbox" data-key="{esc(check_key(data, text))}">'
-        f"<span>{esc(text)}</span>"
-        "</label></li>"
-        for text in items
-    )
-    body = (
-        "<h2>Please check</h2>"
-        "<p>Tick each item once you have checked it. Ticks are saved in this browser only.</p>"
-        f'<ul class="checks">{rows}</ul>'
-    )
-    return [("check", "Please check", body)]
+    slides = []
+    for page, group in enumerate(chunks(items, CHECKS_PER_SLIDE), start=1):
+        id_suffix, title_suffix = suffix(page)
+        title = f"Please check{title_suffix}"
+        rows = "".join(
+            "<li><label>"
+            f'<input type="checkbox" data-key="{esc(check_key(data, text))}">'
+            f"<span>{esc(text)}</span>"
+            "</label></li>"
+            for text in group
+        )
+        intro = (
+            "<p>Tick each item once you have checked it. Ticks are saved in this browser only.</p>"
+        )
+        slides.append(
+            (
+                f"check{id_suffix}",
+                title,
+                f'<h2>{title}</h2>{intro if page == 1 else ""}<ul class="checks">{rows}</ul>',
+            )
+        )
+    return slides
 
 
 SLIDE_BUILDERS = [

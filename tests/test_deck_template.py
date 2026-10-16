@@ -399,3 +399,18 @@ def test_print_shows_both_stages_light_and_gives_the_panel_a_hairline():
     assert re.search(r"\.stage\.split \.panel \{[^}]*background:\s*var\(--accent-soft\)", printed)
     assert re.search(r"\.stage\.split \.panel \{[^}]*color:\s*var\(--text\)", printed)
     assert re.search(r"\.stage\.launch \{[^}]*background:\s*none", printed)
+
+
+def test_a_flow_drawn_left_to_right_gets_narrow_boxes_so_its_text_stays_readable():
+    assert "flowchart LR" in JS and "wrappingWidth" in JS
+
+
+def test_on_a_desktop_window_a_tall_diagram_is_scaled_to_the_window_not_scrolled():
+    desktop = CSS[CSS.index("On a desktop window a tall diagram") :]
+    assert re.search(r"\.js \.diagram \.mermaid svg \{[^}]*max-height:\s*calc\(100dvh", desktop)
+
+
+def test_on_a_desktop_window_the_example_screen_uses_two_columns_after_its_base_rules():
+    two_columns = CSS.index("One example screen per slide")
+    assert two_columns > CSS.index(".wf-screen {")  # an earlier rule would lose to the base rule
+    assert two_columns > CSS.index(".wf-bars i {")

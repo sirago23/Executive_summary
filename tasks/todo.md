@@ -419,23 +419,30 @@ Seen in the browser: at 1280 x 650 all 8 stage slides of the full deck have scro
 
 ## Phase F: Fit and finish
 
-### - [ ] Task 18: Every slide fits 1280 × 650; 360 px, print and keyboard checks
+### - [x] Task 18: Every slide fits 1280 × 650; 360 px, print and keyboard checks
 
 **Description:** Measure every slide of both sample decks at 1280 × 650 and 1920 × 1000. Where a slide is too tall, lower its per-slide limit in `render.py` (`STORIES_PER_SLIDE`, `ROWS_PER_SLIDE`, `STEPS_PER_SLIDE`, `TASK_SLIDE_BUDGET`, or a new limit for risk cards) so it continues on a "(continued)" slide. Never reduce text size. Then check 360 px, Print to PDF and keyboard-only use.
 
 **Acceptance criteria:**
-- [ ] At 1280 × 650, no slide of either sample deck scrolls (measured with a script in the page; numbers in the Result note).
-- [ ] 360 px: nothing scrolls sideways except a wide table inside its own box.
-- [ ] Print to PDF: one slide per page, light colours, nothing cut off. Keyboard: arrows, Home, End, checkboxes, visible focus.
-- [ ] Updated split tests for any changed limit; sample tests still find all 7 stories, 5 phases, 17 tasks, 5 checkpoints.
+- [x] At 1280 × 650, no slide of either sample deck scrolls (measured with a script in the page; numbers in the Result note).
+- [x] 360 px: nothing scrolls sideways except a wide table inside its own box.
+- [x] Print to PDF: one slide per page, light colours, nothing cut off. Keyboard: arrows, Home, End, checkboxes, visible focus.
+- [x] Updated split tests for any changed limit; sample tests still find all 7 stories, 5 phases, 17 tasks, 5 checkpoints.
 
 **Verification:**
-- [ ] `CHECKS` pass, coverage 85% or more
-- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): the measurements above, a PDF page count equal to the slide count
+- [x] `CHECKS` pass, coverage 85% or more
+- [x] Claude's browser check (Playwright screenshots, looked at before reporting): the measurements above, a PDF page count equal to the slide count
 
 **Dependencies:** Tasks 14-17
 **Files:** `S/render.py`, `T/deck.css`, `tests/test_render.py`, `tests/test_sample.py`
 **Scope:** M
+
+**Result (2026-10-16):** Limits lowered in `render.py`: `ROWS_PER_SLIDE` 8 to 6, `WIREFRAMES_PER_SLIDE` 2 to 1, `RISKS_PER_SLIDE` 5 to 4, `CHECKPOINTS_PER_SLIDE` 4 to 3. New: `CHECKS_PER_SLIDE = 5` (the "Please check" slide now continues as `check-2`; the hint line is only on the first page), `RULE_ITEMS_PER_SLIDE = 9` (the Always / Asks you first / Never groups are packed into slides, a group is never split), `FLOW_SIDEWAYS_NODES = 4` (a step-by-step flow with more boxes is drawn left to right with narrow boxes, so text stays readable). `TASK_SLIDE_BUDGET` stays 5: the fullest task slide is 467 px of 512, so a budget of 6 would not fit. CSS: table cell padding 10 to 8 px, the example screen's blocks sit in two columns on desktop, and a tall diagram is scaled to the window (`max-height: calc(100dvh - 245px)`), never scrolled. Text sizes were not reduced anywhere. Tests changed with their limits (four tests now derive their numbers from the constants); new tests cover rules packing, the check slide paging, flow direction and the new CSS. Tests: 371 passed, coverage 87%, ruff clean.
+
+Measured in the browser (scroll height against the slide area, every slide of both sample decks): 1280 x 650 full 48 slides and spec 32 slides, 0 too tall; 1366 x 680 and 1920 x 1000 also 0 too tall. Before: 15 of 40 slides too tall in the full deck, 11 of 25 in the spec deck. 360 px: no slide of either deck scrolls sideways. Print (Print to PDF, A4 landscape, `pdfinfo`): 48 pages for 48 slides and 32 for 32; pages looked at: light colours, nothing cut off, the launch stage prints without its glow and the split panel as a hairline box. Keyboard: arrows, Home and End move between slides; a tick box takes focus with Tab, Space ticks it, a 2.4 px focus ring shows, ArrowLeft still moves to the previous slide, ticks are kept after a reload.
+
+Notes: a long flow leaves empty space below it (the diagram is only as tall as it needs to be). The deck is now 48 slides (was 40) because of the lower limits; the owner may prefer a different trade-off at the v1.1 review. While checking print, a first PDF showed one page only because the browser tool was still set to screen media from an earlier call; not a deck fault (the earlier v1 PDFs had the same 1-page result when produced that way).
+
 
 ### - [ ] Task 19: Design rules, spec, install, republish and code review
 

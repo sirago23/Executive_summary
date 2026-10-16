@@ -454,14 +454,8 @@ td ul {
 
 .wireframes {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--gap);
-}
-
-@media (min-width: 720px) {
-  .wireframes {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
 .wireframe {
@@ -573,6 +567,32 @@ td ul {
   border-radius: 2px 2px 0 0;
 }
 
+/* One example screen per slide. On a desktop window its blocks sit in two columns so the whole
+   screen fits the window; wide blocks (bars, stats, buttons) span both. */
+@media (min-width: 720px) {
+  .wireframes {
+    max-width: 820px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .wf-screen {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .wf-header,
+  .wf-nav,
+  .wf-stats,
+  .wf-button {
+    grid-column: 1 / -1;
+  }
+
+  .wf-field {
+    flex: 1 1 40%;
+  }
+}
+
 .design {
   margin: 0;
 }
@@ -599,6 +619,13 @@ td ul {
 .diagram .mermaid svg {
   max-width: 100%;
   height: auto;
+}
+
+/* On a desktop window a tall diagram is scaled down to the window instead of scrolling. */
+@media (min-width: 720px) {
+  .js .diagram .mermaid svg {
+    max-height: calc(100dvh - 245px);
+  }
 }
 
 html:not(.js) .diagram .mermaid,
@@ -1008,7 +1035,7 @@ table {
 th,
 td {
   text-align: left;
-  padding: 10px 8px;
+  padding: 8px;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
   overflow-wrap: break-word;

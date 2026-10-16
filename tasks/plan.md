@@ -174,7 +174,7 @@ Tasks 14-17 only depend on Task 13 and touch different render functions, but the
 - [x] Task 17b: Text-only slides as "split stage" (text-heavy) and "launch stage" (very short), from the owner's E2 review
 
 ### Phase F: Fit and finish
-- [ ] Task 18: Every slide fits 1280 × 650; 360 px, print and keyboard checks
+- [x] Task 18: Every slide fits 1280 × 650; 360 px, print and keyboard checks
 - [ ] Task 19: Design rules, spec, install, republish and code review
 
 ### Checkpoint: v1.1 Done

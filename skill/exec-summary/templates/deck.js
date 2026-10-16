@@ -174,7 +174,12 @@
     drawCount += 1;
     var id = "diagram-" + drawCount;
     /* The theme travels with each definition, so overlapping draws cannot mix themes up. */
-    var text = "%%{init: " + JSON.stringify(theme) + "}%%\n" + definition;
+    var config = theme;
+    if (/^\s*flowchart LR/.test(definition)) {
+      /* A flow drawn left to right gets narrow boxes, so a long one fits the slide at a readable size. */
+      config = Object.assign({}, theme, { flowchart: { wrappingWidth: 130 } });
+    }
+    var text = "%%{init: " + JSON.stringify(config) + "}%%\n" + definition;
     return window.mermaid.render(id, text).then(
       function (result) {
         return result.svg;

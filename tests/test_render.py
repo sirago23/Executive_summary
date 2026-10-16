@@ -1,6 +1,7 @@
 import copy
 import itertools
 import json
+import math
 import re
 import subprocess
 import sys
@@ -320,12 +321,14 @@ def test_a_story_without_criteria_adds_no_criteria_row(data):
     assert html.count("Only one.") == 1
 
 
-def test_twenty_rows_split_into_three_slides_with_continued_titles(data):
+def test_twenty_rows_split_into_slides_of_the_row_limit_with_continued_titles(data):
     data["stories"][0]["criteria"] = [f"Criterion {i}" for i in range(20)]
     html = render.render_deck(data)
     ids = slide_ids(html)
-    assert [i for i in ids if i.startswith("criteria")] == ["criteria", "criteria-2", "criteria-3"]
-    assert html.count("(continued)") >= 2
+    pages = math.ceil(20 / render.ROWS_PER_SLIDE)
+    expected = ["criteria"] + [f"criteria-{n}" for n in range(2, pages + 1)]
+    assert [i for i in ids if i.startswith("criteria")] == expected
+    assert html.count("(continued)") >= pages - 1
     assert "Criterion 19" in html
 
 
@@ -505,7 +508,9 @@ def test_more_than_two_screens_continue_on_another_slide(data):
     with_screens(data)
     data["screens"] += [dict(data["screens"][1], title=f"S{i}") for i in range(3)]
     ids = slide_ids(render.render_deck(data))
-    assert [i for i in ids if i.startswith("screens")] == ["screens", "screens-2", "screens-3"]
+    pages = math.ceil(len(data["screens"]) / render.WIREFRAMES_PER_SLIDE)
+    expected = ["screens"] + [f"screens-{n}" for n in range(2, pages + 1)]
+    assert [i for i in ids if i.startswith("screens")] == expected
 
 
 def test_unknown_block_type_fails_validation(data):
@@ -896,8 +901,8 @@ def test_many_risks_continue_on_more_slides_and_none_is_lost(data):
     data["risks"] = [dict(base, risk=f"Risk number {i}.") for i in range(13)]
     html = render.render_deck(data)
     slides = risk_slides(html)
-    assert len(slides) == 3
-    assert "(continued)" in slides[1] and "(continued)" in slides[2]
+    assert len(slides) == math.ceil(13 / render.RISKS_PER_SLIDE)
+    assert all("(continued)" in slide for slide in slides[1:])
     for i in range(13):
         assert html.count(f"Risk number {i}.") == 1
 
@@ -1062,8 +1067,9 @@ def test_a_story_split_across_slides_is_repeated_at_the_top_of_the_next_one(data
     story_one = render.esc("S1: " + data["stories"][0]["want"])
     first = html.split('id="s-criteria"')[1].split("</section>")[0]
     second = html.split('id="s-criteria-2"')[1].split("</section>")[0]
-    assert first.count(story_one) == 1 and 'rowspan="8"' in first
-    assert second.count(story_one) == 1 and 'rowspan="2"' in second
+    assert render.ROWS_PER_SLIDE < 10 < 2 * render.ROWS_PER_SLIDE
+    assert first.count(story_one) == 1 and f'rowspan="{render.ROWS_PER_SLIDE}"' in first
+    assert second.count(story_one) == 1 and f'rowspan="{10 - render.ROWS_PER_SLIDE}"' in second
 
 
 def test_other_tables_are_not_merged(data):
@@ -1295,3 +1301,63 @@ def test_stage_text_is_escaped_in_both_styles():
         inner = note_slide(text, src=f"a.md > {evil}", title=evil)
         assert "<script>" not in inner
         assert inner.count("&lt;script&gt;") >= 3
+
+
+# --- Task 18: more slides so each one fits a 1280 x 650 window ---
+
+
+def rules_with(always: int, ask: int, never: int) -> dict:
+    return {
+        "always": [f"Always {i}." for i in range(always)],
+        "ask_first": [f"Ask {i}." for i in range(ask)],
+        "never": [f"Never {i}." for i in range(never)],
+        "src": SRC,
+    }
+
+
+def test_rules_groups_are_packed_into_slides_of_a_bullet_limit_and_never_split(data):
+    assert render.RULE_ITEMS_PER_SLIDE == 9
+    data["rules"] = rules_with(5, 4, 3)
+    slides = render.render_rules(data)
+    assert [sid for sid, _, _ in slides] == ["rules", "rules-2"]
+    assert slides[1][1] == "Rules the AI follows (continued)"
+    assert slides[0][2].count("<li>") == 9 and slides[0][2].count('class="card"') == 2
+    assert slides[1][2].count("<li>") == 3 and slides[1][2].count('class="card"') == 1
+
+
+def test_a_rules_group_longer_than_the_limit_still_gets_a_slide_of_its_own(data):
+    data["rules"] = rules_with(2, 12, 2)
+    slides = render.render_rules(data)
+    assert [sid for sid, _, _ in slides] == ["rules", "rules-2", "rules-3"]
+    assert slides[1][2].count("<li>") == 12
+    assert sum(body.count("<li>") for _, _, body in slides) == 16
+
+
+def test_a_deck_with_few_rules_keeps_them_on_one_slide(data):
+    data["rules"] = rules_with(2, 2, 2)
+    assert [sid for sid, _, _ in render.render_rules(data)] == ["rules"]
+
+
+def test_the_please_check_list_continues_after_the_item_limit_and_keeps_every_item(data):
+    data["open_questions"] = [f"Question {i}" for i in range(12)]
+    html = render.render_deck(data)
+    ids = [i for i in slide_ids(html) if i.startswith("check")]
+    items = 2 + 12 + len(data.get("checkpoints", []))  # goal, stories, questions, checkpoints
+    assert len(ids) == math.ceil(items / render.CHECKS_PER_SLIDE)
+    assert ids[0] == "check" and ids[1] == "check-2"
+    assert html.count("Tick each item once") == 1  # the hint is only on the first page
+    assert all(f"Open question: Question {i}" in html for i in range(12))
+    assert html.count('type="checkbox"') == items
+
+
+def test_a_long_flow_is_drawn_left_to_right_and_a_short_one_top_to_bottom(data):
+    def flow(count: int) -> str:
+        nodes = [{"id": f"n{i}", "label": f"Step {i}"} for i in range(count)]
+        edges = [{"from": f"n{i}", "to": f"n{i + 1}", "label": ""} for i in range(count - 1)]
+        data["diagrams"] = [
+            {"id": "f", "kind": "flow", "title": "Flow", "nodes": nodes, "edges": edges, "src": SRC}
+        ]
+        return render.render_deck(data)
+
+    assert "flowchart LR" in flow(render.FLOW_SIDEWAYS_NODES + 1)
+    assert "flowchart TB" in flow(render.FLOW_SIDEWAYS_NODES)
