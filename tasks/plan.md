@@ -109,3 +109,91 @@ T1 Scaffold
 ## Open Questions
 
 None.
+
+---
+
+# v1.1: Keynote redesign
+
+Spec: [SPEC-redesign.md](../SPEC-redesign.md) (approved 2026-10-16). Tasks: [todo.md](todo.md), Phases E and F.
+
+## Overview
+
+Restyle every slide type in the "Keynote" look the owner chose (Option C on the preview page), while keeping one slide on screen at a time, the same content and the frozen `summary.json` format. The title slide gains up to 4 key-number tiles counted from the data. Every slide must fit a 1280 × 650 window without scrolling.
+
+## Current State
+
+- The look lives almost entirely in `templates/deck.css` (708 lines, light and dark tokens, print rules). `render.py` emits the markup; most slide types already use shared classes (`cards`, `card`, `steps`, `grouped`, `impact`, `checks`, `src`).
+- The active slide has `min-height: calc(100vh - 120px)` and grows with its content, so a long slide scrolls the page.
+- Slide limits today: 6 stories, 8 table rows, 2 wireframes, 6 steps, a task budget of 10 rows per slide.
+- Mermaid draws with its built-in `default` and `dark` themes, plus a second light copy for printing.
+- Tests check contrast from the CSS tokens, the size limits (by matching CSS strings) and many CSS rules by text.
+
+## Architecture Decisions
+
+- **CSS first.** Most of the redesign is new tokens and rules in `deck.css`. `render.py` changes only where the layout needs new markup: the title slide tiles, and row cards for risks, tasks, checkpoints and "please check". Existing class names stay where they still fit, so tests keep their meaning.
+- **Tiles are counted in `render.py`** from fields that already exist (stories, phases, tasks inside phases, checkpoints, criteria inside stories, risks, open questions). No new `summary.json` field, so no format change.
+- **Fit by splitting, never by shrinking.** The active slide fills the window below the bar. Slides that are too tall at 1280 × 650 get lower per-slide limits (the constants above) so they continue on a "(continued)" slide. As a last resort the slide scrolls inside itself; the page never does.
+- **Mermaid uses the `base` theme** with colours read from the CSS tokens when it draws, so diagrams follow light and dark. The print copy uses the light token values.
+- **Print stays light**, and the title glow is dropped in print. Cards get a hairline border in print, because browsers often leave out background colours on paper.
+- **Every task ends with Claude's browser check.** Claude renders the sample decks, opens them with Playwright, takes screenshots in light and dark (and at 360 px or print where the task says), looks at them and fixes problems before reporting. The report says what was checked and what was seen. The owner's own look comes at Checkpoint E2 and v1.1 Done (the owner skips E1).
+- **The order is risk first.** The frame and fit (the hardest requirement) come in the first task, with a measurement of every slide's height, so the later tasks know their limits early.
+
+## Dependency Graph
+
+```
+Task 13 tokens, frame, bar, tables, fit measurement
+   ├── Task 14 title slide + tiles
+   ├── Task 15 stories + risks as cards
+   ├── Task 16 phases, tasks, checkpoints, please check
+   └── Task 17 diagrams + wireframes
+           └── Task 18 fit pass: limits tuned, 360 px, print, keyboard   (needs 14-17)
+                   └── Task 19 docs, install, republish, review
+```
+
+Tasks 14-17 only depend on Task 13 and touch different render functions, but they share `deck.css`, so they are built one after another.
+
+## Task List
+
+### Phase E: Keynote look
+- [ ] Task 13: Keynote tokens, slide frame, top bar and tables
+- [ ] Task 14: Title slide with key-number tiles
+
+### Checkpoint E1
+- [ ] Tests and lint pass
+- [ ] Claude's browser check of the frame, the bar, a table slide and the title slide in light and dark (no owner review here, by the owner's choice on 2026-10-16; Claude continues to Task 15)
+
+- [ ] Task 15: Stories and risks as cards
+- [ ] Task 16: Phases, tasks, checkpoints and "please check"
+- [ ] Task 17: Diagrams and wireframes in the Keynote look
+
+### Checkpoint E2
+- [ ] Tests and lint pass
+- [ ] Owner reviews both sample decks, every slide type, in light and dark
+
+### Phase F: Fit and finish
+- [ ] Task 18: Every slide fits 1280 × 650; 360 px, print and keyboard checks
+- [ ] Task 19: Design rules, spec, install, republish and code review
+
+### Checkpoint: v1.1 Done
+- [ ] `SPEC-redesign.md` success criteria 1-8 all pass
+- [ ] Owner approves the published decks
+
+## Risks and Mitigations
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Long slides (8-row tables with long cells, task lists) do not fit 650 px high | High | Measured in Task 13 before anything else is restyled. Per-slide limits are lowered in Task 18 so slides continue; text is never shrunk. In-slide scroll as the last resort. |
+| The Artifact viewer on claude.ai gives the page less height than the browser window | Med | Checked on the published links in Task 19. If needed, the owner decides between a smaller fit target and accepting in-slide scroll there. |
+| Mermaid `base` theme colours read poorly in dark mode or print | Med | Colours come from the same tokens the contrast tests check. Diagrams checked in light, dark and print in Task 17. The table fallback stays. |
+| Tests that match old CSS text break and get "fixed" by weakening them | Med | Each changed test keeps the same check against the new values (contrast stays AA, sizes stay capped). No test is deleted to get to green. |
+| Card backgrounds disappear when printed | Low | Print rules give cards and tiles a hairline border. Checked with Print to PDF in Task 18. |
+| The redesign quietly changes content or the JSON format | Low | No change to the schema, `validate.py` or `check_coverage.py`. Existing fixtures re-render without edits; sample tests stay green. |
+
+## Decisions
+
+1. **Where the tasks go:** appended to the existing `tasks/plan.md` and `tasks/todo.md` (v1 is complete), numbered on from Task 12 so `/build` picks them up in order.
+2. **Fit check tooling:** done by Claude with the Playwright browser it already has. No new dev dependency; the check is a short script run in the page, and its results are written into the task notes.
+
+## Open Questions
+
+None.

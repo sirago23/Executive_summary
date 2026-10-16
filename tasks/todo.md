@@ -254,9 +254,157 @@ Standard checks used below:
 **Files:** `deck.css`, `deck.js`, tests, `README.md`
 **Scope:** M
 
-### - [ ] Checkpoint: Done
+### - [x] Checkpoint: Done
 - [x] Spec success criteria 1-8 all pass
 - [x] User approves (2026-10-15)
 
 ## Deferred (owner's choice, not done)
 - **Git purge of the old Gmail address (decided 2026-10-15: not now).** The address is still in local-only leftovers: branch `backup-before-rewrite` and `refs/original/*`. `origin/main` is clean (noreply address only). To purge: `git branch -D backup-before-rewrite`, delete every ref under `refs/original/`, `git reflog expire --expire=now --all`, `git gc --prune=now`. Then `git log --all --format=%ae | sort -u` should list only the noreply address.
+
+---
+
+# v1.1: Keynote redesign
+
+Spec: [SPEC-redesign.md](../SPEC-redesign.md) (approved 2026-10-16). Plan: [plan.md](plan.md) > v1.1. The standing Definition of Done at the top of this file applies. In addition, every task:
+- gets Claude's browser check before it is reported done: Claude renders the sample decks, opens them with Playwright, takes screenshots in light and dark mode, looks at them, fixes what is wrong and says in the report what was checked and what was seen (`CLAUDE.md` > Verify before reporting). Tests passing is not enough;
+- keeps one slide on screen at a time, the same content and the frozen `summary.json` format;
+- never shrinks text below the size rules and never weakens a test.
+
+`T` = `skill/exec-summary/templates`. Sample decks: `python -m pytest tests/test_sample.py` writes them to `.tmp/sample/`.
+
+## Phase E: Keynote look
+
+### - [ ] Task 13: Keynote tokens, slide frame, top bar and tables
+
+**Description:** Replace the colour tokens in `T/deck.css` with the Keynote set from the spec (light and dark, every token defined first on `:root`). Restyle the slide frame (14 px corners, one soft shadow, `--surface` slide on `--bg`), the top bar (pill buttons, counter, Contents, dark mode switch) and every table (hairline rows, no zebra stripes, small uppercase headers). Make the active slide fill the window below the bar, at most 1280 px wide, and scroll inside itself if its content is taller. Then measure both sample decks at 1280 × 650 and write down every slide that is too tall, so Task 18 knows what to split.
+
+**Acceptance criteria:**
+- [ ] Every slide type picks up the new tokens in light and dark, with no colour left from the old palette.
+- [ ] Contrast tests in `tests/test_deck_template.py` check the new tokens and still require WCAG AA (body, muted, source text, impact text) in light, dark and print.
+- [ ] On a desktop window the page itself never scrolls; a too-tall slide scrolls inside its frame, and the bar stays put.
+- [ ] A list of slides taller than 650 px (deck, slide id, height) is written in this task's Result note.
+
+**Verification:**
+- [ ] `CHECKS` pass
+- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): both sample decks at 1280 × 650 in light and dark; a table slide and the bar look like the preview
+
+**Dependencies:** None (v1 done)
+**Files:** `T/deck.css`, `T/deck.html`, `tests/test_deck_template.py`, `tests/test_render.py`
+**Scope:** M
+
+### - [ ] Task 14: Title slide with key-number tiles
+
+**Description:** Rebuild the title slide as in the preview: a pill "Executive summary · <status>", the project name (at most 84 px), the tagline in muted text, up to 4 tiles and a footer with the files covered and the date. `render.py` counts the tiles from the data in this order, skipping zeros: user stories, delivery phases, tasks, checkpoints you approve, acceptance criteria, risks, questions for you. A soft accent glow sits in the top-right of this slide only, and is dropped in print.
+
+**Acceptance criteria:**
+- [ ] The full sample deck shows 7 user stories, 5 phases, 17 tasks, 5 checkpoints. The spec-only deck shows no phase or task tile.
+- [ ] Tests: counts match the data, zeros are skipped, at most 4 tiles, the minimal fixture (few fields) still renders, every value is escaped.
+- [ ] The only `gradient` in the CSS is on the title slide, and the size test allows 84 px only for the project name.
+
+**Verification:**
+- [ ] `CHECKS` pass
+- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): title slide of both sample decks in light and dark, and at 360 px
+
+**Dependencies:** Task 13
+**Files:** `S/render.py`, `T/deck.css`, `tests/test_render.py`
+**Scope:** S
+
+### - [ ] Checkpoint E1
+- [ ] `CHECKS` pass
+- [ ] Claude's browser check of the frame, the bar, a table slide and the title slide in light and dark (no owner review here, by the owner's choice on 2026-10-16; Claude continues to Task 15)
+
+### - [ ] Task 15: Stories and risks as cards
+
+**Description:** Stories become cards in a 2-column grid: the "S1" pill, the "As <who>, I want" label and the want text in semi-bold. Risks become row cards: an impact badge (dot plus the word High / Med / Low, coloured with `--hi` / `--med` / `--lo` on their `-bg` tokens), the risk in semi-bold, the handling in muted text below and the source on the right.
+
+**Acceptance criteria:**
+- [ ] Both slides match the preview in light and dark; the impact word is always visible (not colour alone).
+- [ ] Badge text meets AA on its badge background in light, dark and print (new contrast test).
+- [ ] Source text, escaping and "(continued)" splitting work as before (existing tests pass, new markup tests added).
+
+**Verification:**
+- [ ] `CHECKS` pass
+- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): stories and risks slides of the full sample deck at 1280 × 650 and 360 px
+
+**Dependencies:** Task 13
+**Files:** `S/render.py`, `T/deck.css`, `tests/test_render.py`, `tests/test_deck_template.py`
+**Scope:** M
+
+### - [ ] Task 16: Phases, tasks, checkpoints and "please check"
+
+**Description:** Phases become a step strip of cards with the phase id in an accent pill. Tasks show the phase title, then each task as a row card: title in semi-bold, "You will see" text in muted below. Checkpoints become cards with their items as a short list. "Please check" becomes cards with real checkboxes, keeping their localStorage state and keyboard behaviour.
+
+**Acceptance criteria:**
+- [ ] All four slide types match the Keynote look in light and dark.
+- [ ] A phase title is never separated from its tasks across slides (existing test passes).
+- [ ] Checkboxes still tick by keyboard and keep their state after reload (existing tests pass; checked in the browser).
+
+**Verification:**
+- [ ] `CHECKS` pass
+- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): these slides in the full sample deck, keyboard only for the checkboxes
+
+**Dependencies:** Task 13
+**Files:** `S/render.py`, `T/deck.css`, `tests/test_render.py`
+**Scope:** M
+
+### - [ ] Task 17: Diagrams and wireframes in the Keynote look
+
+**Description:** Mermaid draws with the `base` theme and `themeVariables` read from the CSS tokens at draw time, so diagrams match light and dark; the print copy uses the light values. The diagram fallback table uses the new table style. Wireframes stay grayscale with their "Example layout, not the final design" label, inside a card.
+
+**Acceptance criteria:**
+- [ ] Both diagrams draw in light and dark with token colours; switching mode redraws them; print shows the light copy.
+- [ ] With Mermaid blocked, the fallback tables show in the new style.
+- [ ] Tests: the `base` theme and token-based colours are in `deck.js`; wireframe label unchanged.
+
+**Verification:**
+- [ ] `CHECKS` pass
+- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): both diagram slides online and offline, light and dark; the screens slide
+
+**Dependencies:** Task 13
+**Files:** `T/deck.js`, `T/deck.css`, `tests/test_deck_template.py`
+**Scope:** S
+
+### - [ ] Checkpoint E2
+- [ ] `CHECKS` pass
+- [ ] Owner reviews both sample decks, every slide type, in light and dark
+
+## Phase F: Fit and finish
+
+### - [ ] Task 18: Every slide fits 1280 × 650; 360 px, print and keyboard checks
+
+**Description:** Measure every slide of both sample decks at 1280 × 650 and 1920 × 1000. Where a slide is too tall, lower its per-slide limit in `render.py` (`STORIES_PER_SLIDE`, `ROWS_PER_SLIDE`, `STEPS_PER_SLIDE`, `TASK_SLIDE_BUDGET`, or a new limit for risk cards) so it continues on a "(continued)" slide. Never reduce text size. Then check 360 px, Print to PDF and keyboard-only use.
+
+**Acceptance criteria:**
+- [ ] At 1280 × 650, no slide of either sample deck scrolls (measured with a script in the page; numbers in the Result note).
+- [ ] 360 px: nothing scrolls sideways except a wide table inside its own box.
+- [ ] Print to PDF: one slide per page, light colours, nothing cut off. Keyboard: arrows, Home, End, checkboxes, visible focus.
+- [ ] Updated split tests for any changed limit; sample tests still find all 7 stories, 5 phases, 17 tasks, 5 checkpoints.
+
+**Verification:**
+- [ ] `CHECKS` pass, coverage 85% or more
+- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): the measurements above, a PDF page count equal to the slide count
+
+**Dependencies:** Tasks 14-17
+**Files:** `S/render.py`, `T/deck.css`, `tests/test_render.py`, `tests/test_sample.py`
+**Scope:** M
+
+### - [ ] Task 19: Design rules, spec, install, republish and code review
+
+**Description:** Rewrite `references/design-rules.md` for the Keynote look (sizes, tiles, cards, the one glow, fit by splitting). Point `SPEC.md` > Design Direction to `SPEC-redesign.md`, and update `README.md` if it describes the look. Run `agent-skills:code-reviewer` on the v1.1 changes and handle findings per `CLAUDE.md`. Ask before installing the skill (`python tools/install.py`, shows the changes first) and before republishing both sample decks to their existing Artifact links.
+
+**Acceptance criteria:**
+- [ ] `design-rules.md` matches what the CSS and tests enforce; `SPEC.md` points to the redesign.
+- [ ] Review findings fixed or logged in `tasks/v1.1-review.md`.
+- [ ] The installed skill is up to date, and both Artifact links show the Keynote decks (same URLs, new version).
+
+**Verification:**
+- [ ] `CHECKS` pass; `python tools/install.py` says "up to date"
+- [ ] Owner check: you open both links on a laptop, checks one slide fits and the diagrams draw
+
+**Dependencies:** Task 18
+**Files:** `skill/exec-summary/references/design-rules.md`, `SPEC.md`, `README.md`, `tasks/v1.1-review.md`
+**Scope:** S
+
+### - [ ] Checkpoint: v1.1 Done
+- [ ] `SPEC-redesign.md` success criteria 1-8 all pass
+- [ ] Owner approves the published decks
