@@ -305,3 +305,46 @@ def test_a_risk_row_keeps_its_source_in_the_third_column_and_a_task_row_in_the_s
     task_src = block(".task .src {")
     assert "grid-column: 2" in task_src and "grid-row: 1 / span 2" in task_src
     assert "grid-column: 1" in block(".task strong," + NL + ".task .how {")
+
+
+def test_diagrams_use_the_mermaid_base_theme_with_colours_read_from_the_css_tokens():
+    assert '"base"' in JS and "themeVariables" in JS
+    for token in (
+        "--surface",
+        "--card",
+        "--text",
+        "--muted",
+        "--accent",
+        "--accent-soft",
+        "--line",
+    ):
+        assert f'"{token}"' in JS, token
+    assert "getPropertyValue" in JS
+    assert '"theme": "' not in JS and '"default"' not in JS  # the old built-in themes are gone
+
+
+def test_the_screen_copy_follows_the_mode_and_the_print_copy_always_uses_light_tokens():
+    assert 'diagramTheme(isDark() ? "dark" : "light")' in JS
+    assert 'diagramTheme("light")' in JS
+
+
+def test_reading_tokens_for_the_other_mode_puts_the_page_back_as_it_was():
+    reader = JS[JS.index("function diagramTheme") :]
+    reader = reader[: reader.index(NL + "  }" + NL)]
+    assert 'getAttribute("data-theme")' in reader
+    assert "removeAttribute" in reader and "setAttribute" in reader  # restored before returning
+
+
+def test_a_wireframe_sits_in_a_card_and_keeps_a_hairline_in_print():
+    rule = block(".wireframe {")
+    assert "background: var(--card)" in rule and "border-radius: var(--radius)" in rule
+    printed = CSS[CSS.index("@media print") :]
+    border = re.search(r"([^{}]+)\{\s*border:\s*1px solid var\(--line\)", printed).group(1)
+    assert ".wireframe" in border
+
+
+def test_the_diagram_theme_does_not_set_a_font_family():
+    """Setting themeVariables.fontFamily made Mermaid drop the font from the whole diagram. The
+    labels then used the monospace font of the <pre> around them and 11 of 16 were cut off. The
+    Mermaid default font is measured and drawn consistently, so it is left alone."""
+    assert "fontFamily" not in JS

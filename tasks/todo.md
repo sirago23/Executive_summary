@@ -362,22 +362,28 @@ Slides taller than the 560 px slide area at 1280 x 650 (page height is 650; heig
 
 Seen in the browser at 1280 x 650: phases and tasks fit (each tasks slide 560 of 560, but there are now 6 of them, so Task 18 should raise the budget); checkpoints 584 of 560, checkpoints-2 fits, risks 568 of 560, check slide 646 of 560 (scrolls inside its frame). Keyboard only on "Please check": Tab to a box, Space ticks it, Tab to the next, Space again, the focus ring shows; after a reload both ticks were still set. A first look found the risks slide at 1478 px (my shared source-column rule put the risk source in the wrong column); fixed, and a test now locks the placement.
 
-### - [ ] Task 17: Diagrams and wireframes in the Keynote look
+### - [x] Task 17: Diagrams and wireframes in the Keynote look
 
 **Description:** Mermaid draws with the `base` theme and `themeVariables` read from the CSS tokens at draw time, so diagrams match light and dark; the print copy uses the light values. The diagram fallback table uses the new table style. Wireframes stay grayscale with their "Example layout, not the final design" label, inside a card.
 
 **Acceptance criteria:**
-- [ ] Both diagrams draw in light and dark with token colours; switching mode redraws them; print shows the light copy.
-- [ ] With Mermaid blocked, the fallback tables show in the new style.
-- [ ] Tests: the `base` theme and token-based colours are in `deck.js`; wireframe label unchanged.
+- [x] Both diagrams draw in light and dark with token colours; switching mode redraws them; print shows the light copy.
+- [x] With Mermaid blocked, the fallback tables show in the new style.
+- [x] Tests: the `base` theme and token-based colours are in `deck.js`; wireframe label unchanged.
 
 **Verification:**
-- [ ] `CHECKS` pass
-- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): both diagram slides online and offline, light and dark; the screens slide
+- [x] `CHECKS` pass
+- [x] Claude's browser check (Playwright screenshots, looked at before reporting): both diagram slides online and offline, light and dark; the screens slide
 
 **Dependencies:** Task 13
 **Files:** `T/deck.js`, `T/deck.css`, `tests/test_deck_template.py`
 **Scope:** S
+
+**Result (2026-10-16):** Mermaid draws with the `base` theme. `diagramTheme(mode)` in `deck.js` reads the colours from the deck's own CSS tokens (surface, card, text, muted, accent, accent-soft, line); for the print copy it flips `data-theme` to light for an instant and puts it back, so print always gets the light values. Switching the Dark mode switch redraws the diagrams. Wireframes sit in a card, stay grayscale and keep their "Example layout, not the final design" label; print gives them a hairline border. The fallback table already used the new table style. Tests: 351 passed, coverage 87%, ruff clean.
+
+A first look found that setting `themeVariables.fontFamily` makes Mermaid drop the font from the whole diagram, so labels turned monospace (the `<pre>` font) and 11 of 16 were cut off. I compared with the v1 deck rendered from the earlier commit (proper font, 6 of 16 flagged by the same measure, which is a measuring artefact, nothing is cut off on screen). The font line is removed and a test now forbids it.
+
+Seen in the browser at 1280 x 650, online: both diagrams draw (state "drawn", picture and print copy present) in light and dark, text complete and readable, `data-theme` unchanged after drawing. Offline (Mermaid script removed): the fallback table shows in the new style. Screens slide: grayscale wireframes in cards with the label. The stale `.tmp/sample/offline.html` from an earlier session was in the old look; it is regenerated from the current deck.
 
 ### - [ ] Checkpoint E2
 - [ ] `CHECKS` pass

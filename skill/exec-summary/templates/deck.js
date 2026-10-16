@@ -133,11 +133,48 @@
     box.querySelector(".diagram-fallback").hidden = state !== "failed";
   }
 
+  /* Mermaid's "base" theme takes its colours from the same CSS tokens the deck uses, so diagrams
+     match light and dark. To read the tokens of the other mode, data-theme is switched for an
+     instant and put back before anything is painted. */
+  function diagramTheme(mode) {
+    var saved = root.getAttribute("data-theme");
+    root.setAttribute("data-theme", mode);
+    var style = window.getComputedStyle(root);
+    function token(name) {
+      return style.getPropertyValue(name).trim();
+    }
+    var theme = {
+      theme: "base",
+      themeVariables: {
+        background: token("--surface"),
+        primaryColor: token("--card"),
+        primaryTextColor: token("--text"),
+        primaryBorderColor: token("--accent"),
+        secondaryColor: token("--accent-soft"),
+        tertiaryColor: token("--surface"),
+        textColor: token("--text"),
+        lineColor: token("--muted"),
+        mainBkg: token("--card"),
+        nodeBorder: token("--accent"),
+        clusterBkg: token("--accent-soft"),
+        clusterBorder: token("--line"),
+        edgeLabelBackground: token("--surface"),
+        titleColor: token("--text"),
+      },
+    };
+    if (saved === null) {
+      root.removeAttribute("data-theme");
+    } else {
+      root.setAttribute("data-theme", saved);
+    }
+    return theme;
+  }
+
   function renderSvg(definition, theme) {
     drawCount += 1;
     var id = "diagram-" + drawCount;
     /* The theme travels with each definition, so overlapping draws cannot mix themes up. */
-    var text = '%%{init: {"theme": "' + theme + '"}}%%\n' + definition;
+    var text = "%%{init: " + JSON.stringify(theme) + "}%%\n" + definition;
     return window.mermaid.render(id, text).then(
       function (result) {
         return result.svg;
@@ -160,7 +197,7 @@
     if (pre.definition === undefined) {
       pre.definition = pre.textContent;
     }
-    Promise.all([renderSvg(pre.definition, theme), renderSvg(pre.definition, "default")])
+    Promise.all([renderSvg(pre.definition, theme), renderSvg(pre.definition, diagramTheme("light"))])
       .then(function (svgs) {
         pre.innerHTML = svgs[0];
         printed.innerHTML = svgs[1];
@@ -176,7 +213,7 @@
     if (!boxes.length) {
       return;
     }
-    var theme = isDark() ? "dark" : "default";
+    var theme = diagramTheme(isDark() ? "dark" : "light");
     Array.prototype.forEach.call(boxes, function (box) {
       if (!window.mermaid) {
         setState(box, "failed");

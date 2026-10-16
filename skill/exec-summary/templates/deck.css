@@ -462,6 +462,9 @@ td ul {
 
 .wireframe {
   margin: 0;
+  padding: var(--gap);
+  background: var(--card);
+  border-radius: var(--radius);
 }
 
 .wireframe figcaption {
@@ -947,6 +950,7 @@ table.grouped td[rowspan] {
   .stat,
   .pill,
   .card,
+  .wireframe,
   .risk,
   .task,
   .step,
