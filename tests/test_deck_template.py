@@ -32,6 +32,7 @@ TOKENS = (
     "lo-bg",
 )
 LEVELS = ("hi", "med", "lo")
+NL = chr(10)
 
 
 def block(selector_start: str) -> str:
@@ -264,7 +265,7 @@ def test_motion_is_switched_off_when_the_reader_asks_for_less():
 
 
 def test_cards_and_risk_rows_sit_on_the_card_colour_with_rounded_corners():
-    for selector in (".card {", ".risk {", ".stat {"):
+    for selector in (".card {", ".risk,\n.task {", ".step {", ".stat {"):
         rule = block(selector)
         assert "background: var(--card)" in rule, selector
         assert "border-radius: var(--radius)" in rule, selector
@@ -277,5 +278,30 @@ def test_the_impact_badge_has_a_dot_in_front_of_its_word():
 def test_print_gives_cards_and_risk_rows_a_hairline_because_paper_drops_backgrounds():
     printed = CSS[CSS.index("@media print") :]
     border = re.search(r"([^{}]+)\{\s*border:\s*1px solid var\(--line\)", printed).group(1)
-    for selector in (".card", ".risk", ".stat"):
+    for selector in (".card", ".risk", ".task", ".step", ".stat", ".checks li"):
         assert selector in border
+
+
+def test_phase_steps_have_no_counter_label_because_the_id_pill_names_them():
+    assert "counter-increment" not in CSS and 'content: "Step "' not in CSS
+
+
+def test_checklist_items_are_cards_and_keep_their_big_checkbox():
+    assert "background: var(--card)" in block(".checks li {")
+    assert re.search(r"\.checks input \{[^}]*width:\s*20px", CSS)
+
+
+def test_every_source_note_is_12_px_and_11_px_on_a_phone():
+    base = block(NL + ".src {")
+    assert float(re.search(r"font-size:\s*([\d.]+)rem", base).group(1)) <= 0.75
+    phone = CSS[CSS.index("@media (max-width: 719px)") :]
+    assert re.search(r"\.src \{[^}]*font-size:\s*0\.6875rem", phone)
+
+
+def test_a_risk_row_keeps_its_source_in_the_third_column_and_a_task_row_in_the_second():
+    """Risks have three columns (badge, text, source), tasks two (text, source). A shared rule
+    that put both sources in column 2 broke the risks slide (it grew to 1478 px)."""
+    assert "grid-column: 2" not in block(".risk .src {")
+    task_src = block(".task .src {")
+    assert "grid-column: 2" in task_src and "grid-row: 1 / span 2" in task_src
+    assert "grid-column: 1" in block(".task strong," + NL + ".task .how {")

@@ -36,7 +36,9 @@ ROWS_PER_SLIDE = 8
 WIREFRAMES_PER_SLIDE = 2
 STEPS_PER_SLIDE = 6
 RISKS_PER_SLIDE = 5
-TASK_SLIDE_BUDGET = 10  # rows on one tasks slide; each phase title counts as one row
+TASK_SLIDE_BUDGET = 5  # rows on one tasks slide; each phase title counts as one row
+TASKS_PER_BLOCK = 4  # tasks of one phase on one slide, so a block fits the budget
+CHECKPOINTS_PER_SLIDE = 4
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
 MERMAID_SRI = "sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I"
@@ -332,6 +334,7 @@ def render_phases(data: dict) -> list[Slide]:
         title = f"Delivery phases{title_suffix}"
         steps = "".join(
             '<li class="step">'
+            f'<span class="id">{esc(p["id"])}</span>'
             f"<strong>{esc(p['title'])}</strong>"
             + (f"<span>{esc(p['goal'])}</span>" if p.get("goal") else "")
             + f'<span class="src">Source: {esc(p["src"])}</span></li>'
@@ -345,22 +348,20 @@ def render_phases(data: dict) -> list[Slide]:
 
 def task_block(title: str, tasks: list[dict]) -> str:
     rows = "".join(
-        f"<tr><td>{esc(t['title'])}</td><td>{esc(t.get('you_will_see', ''))}</td>"
-        f'<td class="src">{esc(t["src"])}</td></tr>'
+        '<li class="task">'
+        f"<strong>{esc(t['title'])}</strong>"
+        + (f'<span class="how">{esc(t["you_will_see"])}</span>' if t.get("you_will_see") else "")
+        + f'<span class="src">{esc(t["src"])}</span></li>'
         for t in tasks
     )
-    return (
-        f"<h3>{esc(title)}</h3><table><thead><tr><th>Task</th><th>What you will see working</th>"
-        f'<th class="src">Source</th></tr></thead>'
-        f"<tbody>{rows}</tbody></table>"
-    )
+    return f'<h3>{esc(title)}</h3><ul class="rows">{rows}</ul>'
 
 
 def render_tasks(data: dict) -> list[Slide]:
     """Tasks grouped by phase. A phase title always sits on the same slide as its tasks."""
     blocks: list[tuple[str, int]] = []
     for phase in data.get("phases", []):
-        for page, group in enumerate(chunks(phase.get("tasks", []), ROWS_PER_SLIDE), start=1):
+        for page, group in enumerate(chunks(phase.get("tasks", []), TASKS_PER_BLOCK), start=1):
             _, title_suffix = suffix(page)
             blocks.append((task_block(f"{phase['title']}{title_suffix}", group), len(group) + 1))
     pages: list[list[str]] = []
@@ -379,15 +380,28 @@ def render_tasks(data: dict) -> list[Slide]:
     return slides
 
 
+def checkpoint_card(c: dict) -> str:
+    phase = f'<span class="as">{esc(c["phase"])}</span>' if c.get("phase") else ""
+    items = "<ul>" + "".join(f"<li>{esc(i)}</li>" for i in c["items"]) + "</ul>"
+    return f'<div class="card"><h3>{esc(c["title"])}</h3>{phase}{items}{src_note(c["src"])}</div>'
+
+
 def render_checkpoints(data: dict) -> list[Slide]:
-    rows = []
-    for c in data.get("checkpoints", []):
-        name = f"<strong>{esc(c['title'])}</strong>"
-        if c.get("phase"):
-            name += f"<br>{esc(c['phase'])}"
-        items = "<ul>" + "".join(f"<li>{esc(i)}</li>" for i in c["items"]) + "</ul>"
-        rows.append(([name, items], c["src"]))
-    return table_slides("checkpoints", "Checkpoints you approve", ["Checkpoint", "You check"], rows)
+    slides = []
+    for page, group in enumerate(
+        chunks(data.get("checkpoints", []), CHECKPOINTS_PER_SLIDE), start=1
+    ):
+        id_suffix, title_suffix = suffix(page)
+        title = f"Checkpoints you approve{title_suffix}"
+        cards = "".join(checkpoint_card(c) for c in group)
+        slides.append(
+            (
+                f"checkpoints{id_suffix}",
+                title,
+                f'<h2>{esc(title)}</h2><div class="cards">{cards}</div>',
+            )
+        )
+    return slides
 
 
 def risk_row(r: dict) -> str:

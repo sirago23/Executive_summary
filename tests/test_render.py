@@ -788,18 +788,65 @@ def test_seventeen_tasks_in_five_phases_are_all_shown_and_split_over_slides(data
             assert f"What you see for {p}.{t}" in html
 
 
+def test_each_phase_is_a_step_card_with_its_id_in_a_pill(data):
+    html = render.render_deck(with_plan(data))
+    assert '<li class="step"><span class="id">P1</span><strong>Phase 1 title</strong>' in html
+    assert html.count('<span class="id">P') == 5
+
+
+def test_each_task_is_a_row_card_with_title_what_you_see_and_source(data):
+    html = render.render_deck(with_plan(data, (3, 4, 3, 4, 3)))
+    slides = "".join(tasks_slides(html))
+    assert "<table" not in slides
+    assert slides.count('<li class="task">') == 17
+    first = slides.split('<li class="task">')[1]
+    assert first.startswith("<strong>Task 1.1 title</strong>")
+    assert '<span class="how">What you see for 1.1</span>' in first
+    assert f'<span class="src">{SRC.replace(">", "&gt;")}</span>' in first
+
+
+def test_no_tasks_slide_holds_more_rows_than_the_budget(data):
+    html = render.render_deck(with_plan(data, (3, 4, 3, 4, 3, 12)))
+    for slide in tasks_slides(html):
+        rows = slide.count('<li class="task">') + slide.count("<h3>")
+        assert rows <= render.TASK_SLIDE_BUDGET
+
+
+def test_checkpoints_are_cards_with_their_items_as_a_short_list(data):
+    html = render.render_deck(with_plan(data))
+    slide = html.split('id="s-checkpoints"')[1].split("</section>")[0]
+    assert "<table" not in slide
+    card = slide.split('<div class="card">')[1]
+    assert card.startswith("<h3>Checkpoint A</h3>")
+    assert '<span class="as">Phase 1 title</span>' in card
+    assert "<ul><li>Review the look.</li></ul>" in card
+    assert 'class="src"' in card
+
+
+def test_many_checkpoints_continue_on_more_slides_and_none_is_lost(data):
+    with_plan(data)
+    base = data["checkpoints"][0]
+    data["checkpoints"] = [dict(base, title=f"Checkpoint {i}") for i in range(9)]
+    html = render.render_deck(data)
+    assert "checkpoints-2" in slide_ids(html) and "checkpoints-3" in slide_ids(html)
+    for i in range(9):
+        assert html.count(f"<h3>Checkpoint {i}</h3>") == 1
+
+
 def test_a_phase_title_is_never_cut_off_from_its_tasks(data):
     html = render.render_deck(with_plan(data, (3, 4, 3, 4, 3)))
     for slide in tasks_slides(html):
         body = slide.split("</h2>", 1)[1]
         assert body.startswith("<h3>"), "a tasks slide must open with a phase title"
         for block in body.split("<h3>")[1:]:
-            assert "<td>" in block, "every phase title has task rows under it"
+            assert 'class="task"' in block, "every phase title has task rows under it"
 
 
 def test_a_phase_with_many_tasks_continues_with_its_title_repeated(data):
     html = render.render_deck(with_plan(data, (12,)))
-    assert html.count("Phase 1 title (continued)") == 1
+    blocks = -(-12 // render.TASKS_PER_BLOCK)  # ceiling: how many pieces the phase falls into
+    assert blocks >= 2
+    assert html.count("Phase 1 title (continued)") == blocks - 1
     assert all(f"Task 1.{t} title" in html for t in range(1, 13))
 
 

@@ -341,22 +341,26 @@ Slides taller than the 560 px slide area at 1280 x 650 (page height is 650; heig
 
 **Result (2026-10-16):** Stories are cards in a 2-column grid (id pill, "As <who>, I want" label, the want text in semi-bold, source quiet below). Risks are row cards (impact badge with dot and word, risk in semi-bold, handling in muted text, source on the right) in a list, no table, 5 per slide (`RISKS_PER_SLIDE`, new) with "(continued)". The existing story-sentence test now checks the visible text, because the sentence is split across two elements on purpose. The impact contrast test from Task 13 already covers the badge in light, dark and print; print gives cards, risk rows and tiles a hairline border. Tests: 337 passed, coverage 87%, ruff clean. Seen in the browser at 1280 x 650 (light and dark): stories 568 of 560 px, risks 568 of 560 px, so each scrolls 8 px inside its frame; Task 18 tunes the limits. At 360 px: risk rows stack, no sideways scroll. The full deck is now 36 slides (risks continue on a second slide).
 
-### - [ ] Task 16: Phases, tasks, checkpoints and "please check"
+### - [x] Task 16: Phases, tasks, checkpoints and "please check"
 
 **Description:** Phases become a step strip of cards with the phase id in an accent pill. Tasks show the phase title, then each task as a row card: title in semi-bold, "You will see" text in muted below. Checkpoints become cards with their items as a short list. "Please check" becomes cards with real checkboxes, keeping their localStorage state and keyboard behaviour.
 
 **Acceptance criteria:**
-- [ ] All four slide types match the Keynote look in light and dark.
-- [ ] A phase title is never separated from its tasks across slides (existing test passes).
-- [ ] Checkboxes still tick by keyboard and keep their state after reload (existing tests pass; checked in the browser).
+- [x] All four slide types match the Keynote look in light and dark.
+- [x] A phase title is never separated from its tasks across slides (existing test passes).
+- [x] Checkboxes still tick by keyboard and keep their state after reload (existing tests pass; checked in the browser).
 
 **Verification:**
-- [ ] `CHECKS` pass
-- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): these slides in the full sample deck, keyboard only for the checkboxes
+- [x] `CHECKS` pass
+- [x] Claude's browser check (Playwright screenshots, looked at before reporting): these slides in the full sample deck, keyboard only for the checkboxes
 
 **Dependencies:** Task 13
 **Files:** `S/render.py`, `T/deck.css`, `tests/test_render.py`
 **Scope:** M
+
+**Result (2026-10-16):** Phases are a strip of cards with the phase id in an accent pill (the old "Step N" counter is gone). Tasks are row cards under the phase title (title in semi-bold, "what you will see" muted below, source at the right). Checkpoints are 2-column cards (title, phase, items as a list, source), 4 per slide (`CHECKPOINTS_PER_SLIDE`). "Please check" items are cards; the 20 px checkbox, localStorage and key handling are unchanged. New limits: `TASKS_PER_BLOCK = 4`, `TASK_SLIDE_BUDGET = 5` (lowered from 8 and 10, first guess for Task 18). All source notes are now 12 px (11 px on a phone), as the spec says; before, notes inside cards were 18 px. Tests: 346 passed, coverage 87%, ruff clean. Two existing tests changed with their markup and keep their meaning: the phase-title test now looks for task rows instead of table cells, and the "phase continues" test derives the count from `TASKS_PER_BLOCK`.
+
+Seen in the browser at 1280 x 650: phases and tasks fit (each tasks slide 560 of 560, but there are now 6 of them, so Task 18 should raise the budget); checkpoints 584 of 560, checkpoints-2 fits, risks 568 of 560, check slide 646 of 560 (scrolls inside its frame). Keyboard only on "Please check": Tab to a box, Space ticks it, Tab to the next, Space again, the focus ring shows; after a reload both ticks were still set. A first look found the risks slide at 1478 px (my shared source-column rule put the risk source in the wrong column); fixed, and a test now locks the placement.
 
 ### - [ ] Task 17: Diagrams and wireframes in the Keynote look
 
