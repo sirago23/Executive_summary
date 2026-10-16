@@ -145,7 +145,8 @@ Task 13 tokens, frame, bar, tables, fit measurement
    ├── Task 14 title slide + tiles
    ├── Task 15 stories + risks as cards
    ├── Task 16 phases, tasks, checkpoints, please check
-   └── Task 17 diagrams + wireframes
+   ├── Task 17 diagrams + wireframes
+   └── Task 17b text-only slides: split stage / launch stage (added at E2)
            └── Task 18 fit pass: limits tuned, 360 px, print, keyboard   (needs 14-17)
                    └── Task 19 docs, install, republish, review
 ```
@@ -170,6 +171,8 @@ Tasks 14-17 only depend on Task 13 and touch different render functions, but the
 - [ ] Tests and lint pass
 - [ ] Owner reviews both sample decks, every slide type, in light and dark
 
+- [ ] Task 17b: Text-only slides as "split stage" (text-heavy) and "launch stage" (very short), from the owner's E2 review
+
 ### Phase F: Fit and finish
 - [ ] Task 18: Every slide fits 1280 × 650; 360 px, print and keyboard checks
 - [ ] Task 19: Design rules, spec, install, republish and code review
@@ -193,6 +196,7 @@ Tasks 14-17 only depend on Task 13 and touch different render functions, but the
 
 1. **Where the tasks go:** appended to the existing `tasks/plan.md` and `tasks/todo.md` (v1 is complete), numbered on from Task 12 so `/build` picks them up in order.
 2. **Fit check tooling:** done by Claude with the Playwright browser it already has. No new dev dependency; the check is a short script run in the page, and its results are written into the task notes.
+3. **Text-only slides (owner, 2026-10-16, at E2):** split stage for text-heavy slides, launch stage for very short ones, picked by `render.py` from the text length. Numbered 17b so Tasks 18 and 19 keep their numbers.
 
 ## Open Questions
 

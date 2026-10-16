@@ -45,21 +45,28 @@ Reference: Option C on the preview page. It applies to every slide type, not onl
 **Type:** one system sans-serif family (as now, no downloaded fonts). Titles bold (700-750) with tight letter spacing (about -0.025em). Body text regular, card text semi-bold. Numbers use tabular figures.
 
 **Sizes** (replace the current limits in `design-rules.md`):
-- Slide titles at most 44 px. **Exception:** the project name on the title slide, at most 84 px.
+- Slide titles at most 44 px. **Exceptions:** the project name on the title slide, at most 84 px; the title of a launch-stage text slide (see below), at most 64 px.
 - Body text at most 22 px; small text at most 18 px; source text 12 px (11 px on a phone), as now.
 - Stat tile numbers on the title slide at most 44 px.
 - At most three text sizes on one slide, not counting source text and the slide counter.
 
 **Shapes:** slide corners 14 px, cards and tiles 12 px, pills fully round. No shadows inside the slide. One soft shadow on the slide frame.
 
-**The one gradient:** a soft accent glow in the top-right corner of the title slide only. No other gradients, glows, emoji or stock pictures.
+**Glows:** a soft accent glow in the top-right corner of the title slide, and one at the top of a launch-stage text slide. No other gradients, glows, emoji or stock pictures.
+
+### Text-only slides (added 2026-10-16, owner's choice at Checkpoint E2)
+
+The Goal slide and the notes slides have only a title, paragraphs and a source. Previews: https://claude.ai/artifact/C9EHdg17Tc9UV9B8nJZwy8 (Option B and Option C). The renderer picks the style from the text, with no new `summary.json` field:
+- **Launch stage** (all paragraphs together 280 characters or fewer): a dark stage in both modes, centred; an eyebrow, the title up to 64 px, a short accent rule, the paragraphs as centred lines, the source at the bottom, a soft glow at the top. Prints light, without the glow.
+- **Split stage** (longer text): a solid accent panel on the left with the eyebrow, the title and the source; one row per paragraph on the right, the first sentence of each in semi-bold, the rest muted. Stacks on a phone.
+- The eyebrow is the last part of the source (after the last " > ").
 
 ### Slide-by-slide treatment
 
 | Slide | Keynote treatment |
 |---|---|
 | 1 Title | Pill "Executive summary · <status>", huge project name, tagline in muted text, a row of up to 4 **stat tiles**, a footer line with the files covered and the date |
-| 2 Goal | Large title; the goal sentences as body text in a readable width (about 60 characters per line) |
+| 2 Goal, notes | Launch stage or split stage, see "Text-only slides" |
 | 3 Stories | Cards in a 2-column grid: "S1" pill, "As <who>, I want" label, the want text in semi-bold |
 | 4 Criteria | Table restyled: hairline rows, no zebra stripes, the story shown once spanning its rows (as now) |
 | 5 Screens | Wireframes stay grayscale and labelled "Example layout, not the final design", inside a card |
@@ -177,7 +184,8 @@ Render functions stay small and pure; every string from `summary.json` is escape
 
 1. **Fit target:** 1280 × 650 window (a common laptop with browser bars). Larger screens fit automatically.
 2. **Stat tile order:** build order, as above: user stories, delivery phases, tasks, checkpoints you approve, then acceptance criteria, risks, questions for you. Zero counts are skipped.
-3. **Opening mode:** follow the computer's light or dark setting, as now. The switch still works and the last choice is remembered.
+3. **Opening mode:** follow the computer's light or dark setting, as now. The switch still works and the last choice is remembered. The launch stage is the one exception: it stays dark in light mode (owner's choice, 2026-10-16).
+4. **Text-only slides** (2026-10-16, at E2): split stage for text-heavy slides, launch stage for very short ones (see "Text-only slides").
 
 ## Open Questions
 
