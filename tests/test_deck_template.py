@@ -112,7 +112,7 @@ def test_only_the_source_column_may_break_inside_a_word():
     screen. overflow-wrap: break-word does not lower the minimum width, "anywhere" does. It is
     kept to the Source column so ordinary words like "Framework" are never split."""
     assert "overflow-wrap: anywhere" in block("th.src,\ntd.src {")
-    assert "overflow-wrap: anywhere" in block("td.path {")  # file names on the title slide
+    assert "overflow-wrap: anywhere" in block(".path {")  # file names on the title slide
     assert "overflow-wrap: anywhere" not in block("th,\ntd {")
 
 
@@ -156,10 +156,46 @@ def test_the_slide_is_a_rounded_frame_with_one_soft_shadow():
     assert screen.count("box-shadow") == 1  # print switches it off
 
 
-def test_the_only_gradients_are_the_wireframe_image_placeholder():
-    """The title-slide glow is added in Task 14; until then no other gradient may appear."""
+def test_the_only_gradients_are_the_title_glow_and_the_wireframe_image_placeholder():
     uses = re.findall(r"[a-z-]*gradient\(", CSS)
-    assert uses == ["repeating-linear-gradient("]
+    assert sorted(uses) == ["radial-gradient(", "repeating-linear-gradient("]
+    glow_rule = next(m for m in re.finditer(r"([^{}]+)\{([^}]*radial-gradient[^}]*)\}", CSS))
+    assert re.sub(r"/\*.*?\*/", "", glow_rule.group(1), flags=re.S).strip() == "#s-title"
+    printed = CSS[CSS.index("@media print") :]
+    assert "radial-gradient" not in printed
+    assert re.search(r"#s-title(,[^{]*)? \{[^}]*background:\s*none", printed)
+
+
+def font_size_maximums() -> list[tuple[str, float]]:
+    """(selector, largest rem value) for every font-size declaration that uses rem."""
+    found = []
+    for selector, body in re.findall(r"([^{}]+)\{([^}]*)\}", CSS):
+        for value in re.findall(r"font-size:\s*([^;]+);", body):
+            rems = [float(x) for x in re.findall(r"([\d.]+)rem", value)]
+            if rems:
+                found.append((selector.strip(), max(rems)))
+    return found
+
+
+def test_only_the_project_name_may_be_larger_than_the_slide_title_size():
+    big = [(sel, size) for sel, size in font_size_maximums() if size > 2.75]
+    assert big == [("#s-title h1", 5.25)]  # 84 px, the title slide only
+
+
+def test_stat_tile_numbers_stay_at_44_px_or_less():
+    sizes = dict(font_size_maximums())
+    assert 0 < sizes[".stat b"] <= 2.75
+
+
+def test_on_a_phone_the_tiles_use_two_columns_and_that_rule_comes_after_the_base_rule():
+    base = CSS.index(".stats {\n  display: grid")
+    phone = CSS.index("repeat(2, minmax(0, 1fr))")
+    assert phone > base  # an earlier rule would lose to the base rule and leave four columns
+    assert CSS.rindex("@media (max-width: 719px)", 0, phone) > base
+
+
+def test_title_slide_footer_file_names_can_break_on_a_phone():
+    assert "overflow-wrap: anywhere" in block(".path {")
 
 
 def test_on_a_desktop_window_the_page_stays_put_and_the_slide_scrolls_inside_itself():
@@ -197,7 +233,7 @@ def test_slide_keys_still_work_while_a_checkbox_has_focus():
 
 
 def test_the_narrow_source_and_file_columns_keep_a_readable_minimum_width():
-    assert re.search(r"min-width:\s*\d+(\.\d+)?em", block("td.path {"))
+    assert re.search(r"min-width:\s*\d+(\.\d+)?em", block(".path {"))
     narrow = CSS[CSS.index("@media (max-width: 719px)") :]
     assert re.search(r"td\.src \{[^}]*min-width:\s*\d+(\.\d+)?em", narrow)
 

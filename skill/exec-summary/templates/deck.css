@@ -307,7 +307,8 @@ td.src {
   overflow-wrap: anywhere;
 }
 
-td.path {
+.path {
+  display: inline-block;
   min-width: 7em;
   overflow-wrap: anywhere;
 }
@@ -592,7 +593,82 @@ html:not(.js) .diagram-fallback[hidden] {
 }
 
 .tagline {
+  max-width: 40ch;
   color: var(--muted);
+}
+
+/* The title slide: the one place with a glow and the one place with a huge project name. */
+#s-title {
+  background: radial-gradient(ellipse at 88% 8%, var(--accent-soft), transparent 60%),
+    var(--surface);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+#s-title h1 {
+  margin: var(--gap) 0;
+  font-size: clamp(2rem, 1rem + 4.5vw, 5.25rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  overflow-wrap: break-word;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap);
+  margin: calc(var(--gap) * 1.5) 0 0;
+}
+
+.stat {
+  display: grid;
+  gap: 2px;
+  padding: var(--gap);
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.stat b {
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem);
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.stat span {
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+.by {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px var(--gap);
+  margin-top: calc(var(--gap) * 2);
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+.files {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 719px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .cards {
@@ -740,6 +816,15 @@ table.grouped td[rowspan] {
     display: block;
     max-width: none;
     padding: 0;
+  }
+
+  #s-title {
+    background: none;
+  }
+
+  .stat,
+  .pill {
+    border: 1px solid var(--line);
   }
 
   .js .slide:not(.active),

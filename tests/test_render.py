@@ -39,6 +39,95 @@ def test_title_slide_lists_the_files_covered(data):
     assert "goal, stories" in html
 
 
+def title_slide(html: str) -> str:
+    return html.split('id="s-title"')[1].split("</section>")[0]
+
+
+def tiles(html: str) -> list[tuple[str, str]]:
+    """(number, label) of every key-number tile on the title slide."""
+    return re.findall(
+        r'<div class="stat"><b>(\d+)</b><span>([^<]+)</span></div>', title_slide(html)
+    )
+
+
+def test_title_slide_has_a_status_pill_a_name_and_a_tagline(data):
+    data["project"]["status"] = "Draft"
+    slide = title_slide(render.render_deck(data))
+    assert '<span class="pill">Executive summary · Draft</span>' in slide
+    assert "<h1>Billing Record</h1>" in slide
+    assert 'class="tagline"' in slide
+
+
+def test_title_pill_has_no_dangling_separator_without_a_status(data):
+    data["project"].pop("status", None)
+    assert '<span class="pill">Executive summary</span>' in title_slide(render.render_deck(data))
+
+
+def test_full_deck_tiles_show_stories_phases_tasks_and_checkpoints(data):
+    with_tables(data)
+    with_plan(data, (3, 4, 3, 4, 3))
+    assert tiles(render.render_deck(data)) == [
+        (str(len(data["stories"])), "user stories"),
+        ("5", "delivery phases"),
+        ("17", "tasks"),
+        ("1", "checkpoint you approve"),
+    ]
+
+
+def test_spec_only_deck_shows_no_phase_or_task_tile(data):
+    with_tables(data)
+    data["open_questions"] = ["One?", "Two?"]
+    result = tiles(render.render_deck(data))
+    assert [label for _, label in result] == [
+        "user stories",
+        "acceptance criteria",
+        "questions for you",
+    ]
+    assert dict((label, n) for n, label in result)["acceptance criteria"] == "3"
+
+
+def test_a_count_of_zero_gets_no_tile(data):
+    data["stories"] = []
+    data["open_questions"] = []
+    assert tiles(render.render_deck(data)) == []
+    assert 'class="stats"' not in title_slide(render.render_deck(data))
+
+
+def test_no_more_than_four_tiles_are_shown(data):
+    with_tables(data)
+    with_plan(data)
+    assert len(tiles(render.render_deck(data))) == 4
+
+
+def test_tile_labels_use_the_singular_for_one(data):
+    data["stories"] = data["stories"][:1]
+    assert ("1", "user story") in tiles(render.render_deck(data))
+
+
+def test_the_tiles_are_counted_from_the_data_not_typed(data):
+    with_plan(data, (2, 2))
+    first = tiles(render.render_deck(data))
+    data["phases"][0]["tasks"].append(dict(data["phases"][0]["tasks"][0], id="T1.9"))
+    second = tiles(render.render_deck(data))
+    assert dict((label, n) for n, label in first)["tasks"] == "4"
+    assert dict((label, n) for n, label in second)["tasks"] == "5"
+
+
+def test_title_footer_lists_each_file_with_its_date_and_contents(data):
+    footer = title_slide(render.render_deck(data)).split('<footer class="by">')[1]
+    assert '<span class="path">' in footer
+    assert "2026-10-14" in footer and "goal, stories" in footer
+
+
+def test_title_status_date_and_file_fields_are_escaped(data):
+    evil = "<img src=x onerror=y>"
+    data["project"]["status"] = evil
+    data["project"]["date"] = evil
+    data["sources"][0]["modified"] = evil
+    data["sources"][0]["found"] = [evil]
+    assert "<img src=x" not in render.render_deck(data)
+
+
 def test_absent_sections_drop_their_slides_without_a_warning(data):
     del data["goal"]
     del data["stories"]

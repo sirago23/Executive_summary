@@ -299,22 +299,24 @@ Slides taller than the 560 px slide area at 1280 x 650 (page height is 650; heig
 - Spec-only deck (25 slides, 12 tall): stories 673, criteria 643, criteria-2 657, screens 703, screens-2 783, architecture 589, flow 936, stack 582, rules 946, decisions 717, out-of-scope 582, success 595.
 - Card styles in Tasks 14-17 will change these numbers; Task 18 measures again.
 
-### - [ ] Task 14: Title slide with key-number tiles
+### - [x] Task 14: Title slide with key-number tiles
 
 **Description:** Rebuild the title slide as in the preview: a pill "Executive summary · <status>", the project name (at most 84 px), the tagline in muted text, up to 4 tiles and a footer with the files covered and the date. `render.py` counts the tiles from the data in this order, skipping zeros: user stories, delivery phases, tasks, checkpoints you approve, acceptance criteria, risks, questions for you. A soft accent glow sits in the top-right of this slide only, and is dropped in print.
 
 **Acceptance criteria:**
-- [ ] The full sample deck shows 7 user stories, 5 phases, 17 tasks, 5 checkpoints. The spec-only deck shows no phase or task tile.
-- [ ] Tests: counts match the data, zeros are skipped, at most 4 tiles, the minimal fixture (few fields) still renders, every value is escaped.
-- [ ] The only `gradient` in the CSS is on the title slide, and the size test allows 84 px only for the project name.
+- [x] The full sample deck shows 7 user stories, 5 phases, 17 tasks, 5 checkpoints. The spec-only deck shows no phase or task tile.
+- [x] Tests: counts match the data, zeros are skipped, at most 4 tiles, the minimal fixture (few fields) still renders, every value is escaped.
+- [x] The only `gradient` in the CSS is on the title slide, and the size test allows 84 px only for the project name.
 
 **Verification:**
-- [ ] `CHECKS` pass
-- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): title slide of both sample decks in light and dark, and at 360 px
+- [x] `CHECKS` pass
+- [x] Claude's browser check (Playwright screenshots, looked at before reporting): title slide of both sample decks in light and dark, and at 360 px
 
 **Dependencies:** Task 13
 **Files:** `S/render.py`, `T/deck.css`, `tests/test_render.py`
 **Scope:** S
+
+**Result (2026-10-16):** The title slide is a pill ("Executive summary · status"), the project name (up to 84 px, this slide only), the tagline, up to 4 tiles and a footer. Tiles are counted in `render.py` (`stat_counts`), singular for 1, zeros skipped. The footer lists each file with its last-changed date and contents, so the old "This summary covers" table is gone and no information was dropped. The glow is the only `radial-gradient`, on `#s-title`, and print drops it. Tests: 330 passed, coverage 87%, ruff clean. Seen in the browser: full deck shows 7 user stories, 5 delivery phases, 17 tasks, 5 checkpoints you approve (light and dark at 1280 x 650); spec-only deck shows 7 user stories and 17 acceptance criteria, no phase or task tile; at 360 px two columns of tiles, no sideways scroll. A first 360 px look found the phone rule losing to the base rule (four narrow columns); fixed and covered by a test.
 
 ### - [ ] Checkpoint E1
 - [ ] `CHECKS` pass

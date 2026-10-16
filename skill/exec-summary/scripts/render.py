@@ -63,27 +63,56 @@ def suffix(page: int) -> tuple[str, str]:
     return ("", "") if page == 1 else (f"-{page}", " (continued)")
 
 
+MAX_TILES = 4
+
+
+def stat_counts(data: dict) -> list[tuple[int, str, str]]:
+    """(count, singular, plural) in build order. Every number is counted from the data."""
+    phases = data.get("phases", [])
+    return [
+        (len(data.get("stories", [])), "user story", "user stories"),
+        (len(phases), "delivery phase", "delivery phases"),
+        (sum(len(p.get("tasks", [])) for p in phases), "task", "tasks"),
+        (len(data.get("checkpoints", [])), "checkpoint you approve", "checkpoints you approve"),
+        (
+            sum(len(s.get("criteria", [])) for s in data.get("stories", [])),
+            "acceptance criterion",
+            "acceptance criteria",
+        ),
+        (len(data.get("risks", [])), "risk", "risks"),
+        (len(data.get("open_questions", [])), "question for you", "questions for you"),
+    ]
+
+
+def stat_tiles(data: dict) -> str:
+    shown = [(n, one if n == 1 else many) for n, one, many in stat_counts(data) if n > 0]
+    if not shown:
+        return ""
+    tiles = "".join(
+        f'<div class="stat"><b>{n}</b><span>{label}</span></div>' for n, label in shown[:MAX_TILES]
+    )
+    return f'<div class="stats">{tiles}</div>'
+
+
 def render_title(data: dict) -> list[Slide]:
     project = data["project"]
-    parts = [f"<h1>{esc(project['name'])}</h1>"]
+    pill = " · ".join(
+        ["Executive summary", *([esc(project["status"])] if project.get("status") else [])]
+    )
+    parts = [f'<span class="pill">{pill}</span>', f"<h1>{esc(project['name'])}</h1>"]
     if project.get("tagline"):
         parts.append(f'<p class="tagline">{esc(project["tagline"])}</p>')
-    meta = " · ".join(esc(project[k]) for k in ("status", "date") if project.get(k))
-    if meta:
-        parts.append(f"<p>{meta}</p>")
-    rows = "".join(
-        "<tr>"
-        f'<td class="path">{esc(s["path"])}</td>'
-        f"<td>{esc(s.get('modified', ''))}</td>"
-        f"<td>{esc(', '.join(s.get('found', [])))}</td>"
-        "</tr>"
+    parts.append(stat_tiles(data))
+    files = "".join(
+        "<li>"
+        f'<span class="path">{esc(s["path"])}</span>'
+        + (f" · last changed {esc(s['modified'])}" if s.get("modified") else "")
+        + (f" · contains {esc(', '.join(s['found']))}" if s.get("found") else "")
+        + "</li>"
         for s in data["sources"]
     )
-    parts.append(
-        "<h3>This summary covers</h3>"
-        "<table><thead><tr><th>File</th><th>Last changed</th><th>Contains</th></tr></thead>"
-        f"<tbody>{rows}</tbody></table>"
-    )
+    date = f"<span>{esc(project['date'])}</span>" if project.get("date") else ""
+    parts.append(f'<footer class="by"><ul class="files">{files}</ul>{date}</footer>')
     return [("title", "Overview", "".join(parts))]
 
 
