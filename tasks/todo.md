@@ -386,7 +386,7 @@ A first look found that setting `themeVariables.fontFamily` makes Mermaid drop t
 Seen in the browser at 1280 x 650, online: both diagrams draw (state "drawn", picture and print copy present) in light and dark, text complete and readable, `data-theme` unchanged after drawing. Offline (Mermaid script removed): the fallback table shows in the new style. Screens slide: grayscale wireframes in cards with the label. The stale `.tmp/sample/offline.html` from an earlier session was in the old look; it is regenerated from the current deck.
 
 ### - [ ] Checkpoint E2
-- [ ] `CHECKS` pass
+- [x] `CHECKS` pass (351 passed, coverage 87%, ruff clean, 2026-10-16)
 - [ ] Owner reviews both sample decks, every slide type, in light and dark
 
 ## Phase F: Fit and finish
