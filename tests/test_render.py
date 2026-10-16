@@ -1215,3 +1215,83 @@ def test_cli_still_prints_the_deck_path_when_links_json_cannot_be_saved(tmp_path
     assert result.returncode == 1
     assert "SPEC.html" in result.stderr and "not recorded" in result.stderr
     assert (folder / "SPEC.html").is_file()
+
+
+# --- Task 17b: text-only slides as launch stage (short) or split stage (long) ---
+
+
+def note_slide(text: list[str], src: str = "plan.md > Overview", title: str = "Plan") -> str:
+    ((_, _, inner),) = render.render_notes({"notes": [{"title": title, "text": text, "src": src}]})
+    return inner
+
+
+def test_a_short_note_is_a_launch_stage_with_eyebrow_title_rule_lines_and_source():
+    inner = note_slide(["Run it on your PC.", "No login."], title="Phase 1")
+    assert 'class="stage launch"' in inner
+    assert '<span class="eyebrow">Overview</span>' in inner
+    assert "<h2>Phase 1</h2>" in inner
+    assert '<span class="rule"></span>' in inner
+    assert '<div class="lines"><p>Run it on your PC.</p><p>No login.</p></div>' in inner
+    assert inner.endswith('<p class="src">Source: plan.md &gt; Overview</p></div>')
+
+
+def test_a_long_note_is_a_split_stage_with_a_panel_and_one_row_per_paragraph():
+    pad = " " + "word " * 60
+    inner = note_slide(["First part. More words here." + pad, "Second part."], title="Plan")
+    assert 'class="stage split"' in inner
+    assert '<div class="panel"><span class="eyebrow">Overview</span><h2>Plan</h2>' in inner
+    assert (
+        '<ul class="points"><li><span><strong>First part.</strong> More words here. word' in inner
+    )
+    assert "<li><span><strong>Second part.</strong></span></li>" in inner
+    assert inner.count("<li>") == 2
+
+
+def test_the_launch_threshold_is_280_characters_in_total():
+    just_under = "x" * 279 + "."  # 280
+    just_over = "x" * 280 + "."  # 281
+    assert 'class="stage launch"' in note_slide([just_under])
+    assert 'class="stage split"' in note_slide([just_over])
+    assert 'class="stage launch"' in note_slide(["a" * 100, "b" * 100, "c" * 80])
+    assert 'class="stage split"' in note_slide(["a" * 100, "b" * 100, "c" * 81])
+
+
+@pytest.mark.parametrize(
+    ("src", "eyebrow"),
+    [
+        ("a.md > Phase 1: Local", "Phase 1: Local"),
+        ("a.md > Goal > Why", "Why"),
+        ("a.md", None),
+    ],
+)
+def test_the_eyebrow_is_the_part_of_the_source_after_the_last_arrow(src, eyebrow):
+    inner = note_slide(["Short."], src=src)
+    if eyebrow is None:
+        assert "eyebrow" not in inner
+    else:
+        assert f'<span class="eyebrow">{eyebrow}</span>' in inner
+
+
+def test_the_first_sentence_split_handles_one_sentence_and_abbreviations():
+    one = note_slide(["x" * 300])
+    assert f"<strong>{'x' * 300}</strong>" in one
+    abbr = note_slide(["Use a tool, e.g. Task 2, first. Then wait." + " y" * 150])
+    assert "<strong>Use a tool, e.g. Task 2, first.</strong> Then wait." in abbr
+
+
+def test_the_goal_slide_uses_the_same_stages_and_keeps_its_id_and_title(data):
+    html = render.render_deck(data)
+    assert 'id="s-goal"' in html
+    goal = html.split('id="s-goal"')[1].split("</section>")[0]
+    assert 'class="stage launch"' in goal and "<h2>The goal</h2>" in goal
+    data["goal"]["text"] = ["A long sentence. " * 12] * 2
+    goal = render.render_deck(data).split('id="s-goal"')[1].split("</section>")[0]
+    assert 'class="stage split"' in goal
+
+
+def test_stage_text_is_escaped_in_both_styles():
+    evil = "<script>alert(1)</script>"
+    for text in ([evil], [evil + " x" * 200]):
+        inner = note_slide(text, src=f"a.md > {evil}", title=evil)
+        assert "<script>" not in inner
+        assert inner.count("&lt;script&gt;") >= 3

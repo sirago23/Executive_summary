@@ -2,6 +2,7 @@
 
 import json
 import re
+from html import unescape
 from pathlib import Path
 
 import check_coverage
@@ -107,10 +108,11 @@ def test_full_deck_lists_all_three_files_on_the_title_slide():
 def test_decks_show_other_notes_for_sections_that_fit_no_slide():
     data, html = build("spec")
     assert any("Runtime and access" in n["src"] for n in data["notes"])
+    visible = " ".join(unescape(re.sub(r"<[^>]+>", " ", html)).split())
     for note in data["notes"]:
-        assert render.esc(note["title"]) in html
-        for line in note["text"]:
-            assert render.esc(line) in html
+        assert note["title"] in visible
+        for line in note["text"]:  # a split stage bolds the first sentence, so compare text
+            assert " ".join(line.split()) in visible
 
 
 def test_full_deck_check_slide_lists_every_checkpoint():

@@ -157,11 +157,18 @@ def test_the_slide_is_a_rounded_frame_with_one_soft_shadow():
     assert screen.count("box-shadow") == 1  # print switches it off
 
 
-def test_the_only_gradients_are_the_title_glow_and_the_wireframe_image_placeholder():
+def test_the_only_glows_are_on_the_title_and_launch_stage_and_the_wireframe_placeholder():
     uses = re.findall(r"[a-z-]*gradient\(", CSS)
-    assert sorted(uses) == ["radial-gradient(", "repeating-linear-gradient("]
-    glow_rule = next(m for m in re.finditer(r"([^{}]+)\{([^}]*radial-gradient[^}]*)\}", CSS))
-    assert re.sub(r"/\*.*?\*/", "", glow_rule.group(1), flags=re.S).strip() == "#s-title"
+    assert sorted(uses) == [
+        "radial-gradient(",
+        "radial-gradient(",
+        "repeating-linear-gradient(",
+    ]
+    glow_selectors = [
+        re.sub(r"/\*.*?\*/", "", m.group(1), flags=re.S).strip()
+        for m in re.finditer(r"([^{}]+)\{([^}]*radial-gradient[^}]*)\}", CSS)
+    ]
+    assert glow_selectors == ["#s-title", ".stage.launch"]
     printed = CSS[CSS.index("@media print") :]
     assert "radial-gradient" not in printed
     assert re.search(r"#s-title(,[^{]*)? \{[^}]*background:\s*none", printed)
@@ -178,9 +185,10 @@ def font_size_maximums() -> list[tuple[str, float]]:
     return found
 
 
-def test_only_the_project_name_may_be_larger_than_the_slide_title_size():
+def test_only_two_titles_may_be_larger_than_the_slide_title_size():
     big = [(sel, size) for sel, size in font_size_maximums() if size > 2.75]
-    assert big == [("#s-title h1", 5.25)]  # 84 px, the title slide only
+    # 84 px for the project name, 64 px for the title of a launch-stage text slide
+    assert big == [("#s-title h1", 5.25), (".stage.launch h2", 4.0)]
 
 
 def test_stat_tile_numbers_stay_at_44_px_or_less():
@@ -348,3 +356,46 @@ def test_the_diagram_theme_does_not_set_a_font_family():
     labels then used the monospace font of the <pre> around them and 11 of 16 were cut off. The
     Mermaid default font is measured and drawn consistently, so it is left alone."""
     assert "fontFamily" not in JS
+
+
+STAGE_TOKENS = ("stage", "stage-text", "stage-muted", "stage-accent")
+
+
+def test_the_launch_stage_text_is_readable_on_its_dark_stage_and_on_paper():
+    on_screen = tokens(block(":root {"))
+    on_paper = THEMES["print"]
+    for theme in (on_screen, on_paper):
+        assert set(STAGE_TOKENS) <= set(theme)
+        for ink in ("stage-text", "stage-muted", "stage-accent"):
+            assert ratio(theme[ink], theme["stage"]) >= 4.5, ink
+    assert luminance(on_screen["stage"]) < 0.05  # dark in light mode too
+    assert luminance(on_paper["stage"]) > 0.9  # light in print
+
+
+def test_the_launch_stage_stays_dark_in_both_modes_because_only_the_root_block_defines_it():
+    assert "--stage:" not in dark_block() and "--stage:" not in block(':root[data-theme="dark"]')
+
+
+def test_the_launch_stage_title_is_64_px_at_most_and_the_split_title_is_a_normal_title():
+    launch = re.search(r"\.stage\.launch h2 \{[^}]*font-size:\s*clamp\([^)]*([\d.]+)rem\)", CSS)
+    assert launch and float(launch.group(1)) <= 4.0
+    assert "font-size: var(--fs-title)" in block(".stage.split .panel h2 {")
+
+
+def test_the_split_stage_panel_is_the_accent_with_accent_text_and_stacks_on_a_phone():
+    panel = block(".stage.split .panel {")
+    assert "background: var(--accent)" in panel and "color: var(--accent-text)" in panel
+    phone = CSS[CSS.index("@media (max-width: 719px)", CSS.index(".stage.split {")) :]
+    assert re.search(r"\.stage\.split \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)", phone)
+
+
+def test_a_slide_with_a_stage_has_no_padding_so_the_stage_fills_the_frame():
+    assert re.search(r"\.slide:has\(> \.stage\) \{[^}]*padding:\s*0", CSS)
+
+
+def test_print_shows_both_stages_light_and_gives_the_panel_a_hairline():
+    printed = CSS[CSS.index("@media print") :]
+    assert "--stage: #ffffff" in printed
+    assert re.search(r"\.stage\.split \.panel \{[^}]*background:\s*var\(--accent-soft\)", printed)
+    assert re.search(r"\.stage\.split \.panel \{[^}]*color:\s*var\(--text\)", printed)
+    assert re.search(r"\.stage\.launch \{[^}]*background:\s*none", printed)

@@ -389,7 +389,7 @@ Seen in the browser at 1280 x 650, online: both diagrams draw (state "drawn", pi
 - [x] `CHECKS` pass (351 passed, coverage 87%, ruff clean, 2026-10-16)
 - [ ] Owner reviews both sample decks, every slide type, in light and dark (first finding 2026-10-16: text-only slides look too plain, so Task 17b was added; the owner reviews the rest after it)
 
-### - [ ] Task 17b: Text-only slides as "split stage" and "launch stage"
+### - [x] Task 17b: Text-only slides as "split stage" and "launch stage"
 
 **Description:** The Goal slide and the notes slides (for example "The build plan in short", "Phase 1: run it on your PC") are plain text on white. The owner chose from three previews (https://claude.ai/artifact/C9EHdg17Tc9UV9B8nJZwy8, 2026-10-16): **Option B, split stage**, for text-heavy slides and **Option C, launch stage**, for very short ones. `render.py` picks the style from the text itself, so no `summary.json` change:
 - **Short** (all paragraphs together 280 characters or fewer, first guess): launch stage. Dark stage in both modes, centred, eyebrow, title up to 64 px, a short accent rule, the paragraphs as centred lines (first one in the main text colour, the rest muted), source at the bottom, a soft accent glow at the top.
@@ -398,19 +398,24 @@ Seen in the browser at 1280 x 650, online: both diagrams draw (state "drawn", pi
 - Print: both styles print light (the launch stage uses the light tokens and drops its glow; the split panel gets a hairline border instead of the solid fill if the fill does not print).
 
 **Acceptance criteria:**
-- [ ] In the full sample deck, "The build plan in short" uses the split stage and "Phase 1: run it on your PC" uses the launch stage, in light and dark.
-- [ ] Contrast tests: text on the accent panel (title, eyebrow, source) and every launch-stage colour pass WCAG AA in light, dark and print.
-- [ ] Size and gradient tests updated to the new spec rules: 64 px allowed only for the launch-stage title, glows allowed only on the title slide and the launch stage.
-- [ ] Render tests: the 280-character threshold picks the style (just under, just over); the eyebrow comes from the source; a source with no " > " has no eyebrow; the first-sentence split handles a paragraph with one sentence and text with abbreviations like "e.g."; all text stays escaped.
-- [ ] 360 px: the split stage stacks (panel on top), nothing scrolls sideways.
+- [x] In the full sample deck, "The build plan in short" uses the split stage and "Phase 1: run it on your PC" uses the launch stage, in light and dark.
+- [x] Contrast tests: text on the accent panel (title, eyebrow, source) and every launch-stage colour pass WCAG AA in light, dark and print.
+- [x] Size and gradient tests updated to the new spec rules: 64 px allowed only for the launch-stage title, glows allowed only on the title slide and the launch stage.
+- [x] Render tests: the 280-character threshold picks the style (just under, just over); the eyebrow comes from the source; a source with no " > " has no eyebrow; the first-sentence split handles a paragraph with one sentence and text with abbreviations like "e.g."; all text stays escaped.
+- [x] 360 px: the split stage stacks (panel on top), nothing scrolls sideways.
 
 **Verification:**
-- [ ] `CHECKS` pass, coverage 85% or more
-- [ ] Claude's browser check (Playwright screenshots, looked at before reporting): both styles in light and dark at 1280 × 650 and 360 px, and in print preview
+- [x] `CHECKS` pass, coverage 85% or more
+- [x] Claude's browser check (Playwright screenshots, looked at before reporting): both styles in light and dark at 1280 × 650 and 360 px, and in print preview
 
 **Dependencies:** Task 13
 **Files:** `S/render.py`, `T/deck.css`, `tests/test_render.py`, `tests/test_deck_template.py`, `SPEC-redesign.md`
 **Scope:** M
+
+**Result (2026-10-16):** `render_text_stage` in `render.py` renders the Goal slide and every notes slide: total text up to `LAUNCH_STAGE_CHARS = 280` gives the launch stage, longer text the split stage (first sentence of each paragraph in bold; "e.g." and similar do not end a sentence; the eyebrow is the last part of the source). In the full sample deck the Goal slide and 5 notes are split, 2 notes are launch. CSS: four `--stage*` tokens (dark in both modes, light in print), `.slide:has(> .stage)` has no padding so the stage fills the frame, the dot ring is an outline (no second box-shadow). `test_sample.py` "other notes" test now compares visible text because the first sentence is wrapped in bold (same intent, nothing weakened). Tests: 366 passed, coverage 87%, ruff clean.
+
+Seen in the browser: at 1280 x 650 all 8 stage slides of the full deck have scroll height equal to the 560 px slide area (no scrolling); both styles in light and dark (dark: light-blue panel with dark text, readable); at 360 px the split stage stacks with the panel on top and the page does not scroll sideways (345 of 360 px; launch 360 of 360); print emulation shows both styles light, the panel with a soft fill and hairline, no glow. Not checked: Print to PDF page count (Task 18).
+
 
 ## Phase F: Fit and finish
 

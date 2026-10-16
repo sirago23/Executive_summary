@@ -171,7 +171,7 @@ Tasks 14-17 only depend on Task 13 and touch different render functions, but the
 - [ ] Tests and lint pass
 - [ ] Owner reviews both sample decks, every slide type, in light and dark
 
-- [ ] Task 17b: Text-only slides as "split stage" (text-heavy) and "launch stage" (very short), from the owner's E2 review
+- [x] Task 17b: Text-only slides as "split stage" (text-heavy) and "launch stage" (very short), from the owner's E2 review
 
 ### Phase F: Fit and finish
 - [ ] Task 18: Every slide fits 1280 × 650; 360 px, print and keyboard checks

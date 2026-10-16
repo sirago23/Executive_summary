@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 import sys
 from pathlib import Path
 from string import Template
@@ -39,6 +40,7 @@ RISKS_PER_SLIDE = 5
 TASK_SLIDE_BUDGET = 5  # rows on one tasks slide; each phase title counts as one row
 TASKS_PER_BLOCK = 4  # tasks of one phase on one slide, so a block fits the budget
 CHECKPOINTS_PER_SLIDE = 4
+LAUNCH_STAGE_CHARS = 280  # text-only slides up to this many characters get the launch stage
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
 MERMAID_SRI = "sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I"
@@ -119,12 +121,50 @@ def render_title(data: dict) -> list[Slide]:
     return [("title", "Overview", "".join(parts))]
 
 
+SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
+ABBREVIATIONS = ("e.g.", "i.e.", "etc.", "vs.", "approx.")
+
+
+def split_first_sentence(text: str) -> tuple[str, str]:
+    """(first sentence, the rest). A full stop after "e.g." and the like does not end a sentence."""
+    for end in SENTENCE_END.finditer(text):
+        if not text[: end.start()].lower().endswith(ABBREVIATIONS):
+            return text[: end.start()], text[end.end() :]
+    return text, ""
+
+
+def eyebrow(src: str) -> str:
+    """The part of the source after the last " > ", for example "Phase 1: Local"."""
+    _, arrow, section = src.rpartition(" > ")
+    return f'<span class="eyebrow">{esc(section.strip())}</span>' if arrow else ""
+
+
+def render_text_stage(title: str, paragraphs: list[str], src: str) -> str:
+    """A slide of only text: a dark launch stage when it is very short, otherwise a split stage
+    with a panel on the left and one row per paragraph on the right."""
+    head = f"{eyebrow(src)}<h2>{esc(title)}</h2>"
+    if sum(len(t) for t in paragraphs) <= LAUNCH_STAGE_CHARS:
+        lines = "".join(f"<p>{esc(t)}</p>" for t in paragraphs)
+        return (
+            f'<div class="stage launch">{head}<span class="rule"></span>'
+            f'<div class="lines">{lines}</div>{src_note(src)}</div>'
+        )
+    rows = ""
+    for text in paragraphs:
+        first, rest = split_first_sentence(text)
+        tail = f" {esc(rest)}" if rest else ""
+        rows += f"<li><span><strong>{esc(first)}</strong>{tail}</span></li>"
+    return (
+        f'<div class="stage split"><div class="panel">{head}{src_note(src)}</div>'
+        f'<ul class="points">{rows}</ul></div>'
+    )
+
+
 def render_goal(data: dict) -> list[Slide]:
     goal = data.get("goal")
     if not goal:
         return []
-    body = "".join(f"<p>{esc(t)}</p>" for t in goal["text"])
-    return [("goal", "The goal", f"<h2>The goal</h2>{body}{src_note(goal['src'])}")]
+    return [("goal", "The goal", render_text_stage("The goal", goal["text"], goal["src"]))]
 
 
 def story_want(story: dict) -> str:
@@ -472,12 +512,11 @@ def render_notes(data: dict) -> list[Slide]:
     slides = []
     for page, note in enumerate(data.get("notes", []), start=1):
         id_suffix, _ = suffix(page)
-        body = "".join(f"<p>{esc(t)}</p>" for t in note["text"])
         slides.append(
             (
                 f"notes{id_suffix}",
                 note["title"],
-                f"<h2>{esc(note['title'])}</h2>{body}{src_note(note['src'])}",
+                render_text_stage(note["title"], note["text"], note["src"]),
             )
         )
     return slides
