@@ -125,13 +125,13 @@ def render_title(data: dict) -> list[Slide]:
 
 
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
-ABBREVIATIONS = ("e.g.", "i.e.", "etc.", "vs.", "approx.")
+ABBREVIATIONS = ("e.g.", "i.e.", "vs.", "approx.", "dr.", "mr.", "mrs.", "ms.", "st.", "u.s.")
 
 
 def split_first_sentence(text: str) -> tuple[str, str]:
     """(first sentence, the rest). A full stop after "e.g." and the like does not end a sentence."""
     for end in SENTENCE_END.finditer(text):
-        if not text[: end.start()].lower().endswith(ABBREVIATIONS):
+        if text[: end.start()].split()[-1].lower() not in ABBREVIATIONS:
             return text[: end.start()], text[end.end() :]
     return text, ""
 
@@ -139,7 +139,8 @@ def split_first_sentence(text: str) -> tuple[str, str]:
 def eyebrow(src: str) -> str:
     """The part of the source after the last " > ", for example "Phase 1: Local"."""
     _, arrow, section = src.rpartition(" > ")
-    return f'<span class="eyebrow">{esc(section.strip())}</span>' if arrow else ""
+    label = section.strip()
+    return f'<span class="eyebrow">{esc(label)}</span>' if arrow and label else ""
 
 
 def render_text_stage(title: str, paragraphs: list[str], src: str) -> str:
@@ -561,7 +562,7 @@ def render_check(data: dict) -> list[Slide]:
     for question in data.get("open_questions", []):
         items.append(f"Open question: {question}")
     slides = []
-    for page, group in enumerate(chunks(items, CHECKS_PER_SLIDE), start=1):
+    for page, group in enumerate(chunks(items, CHECKS_PER_SLIDE) or [[]], start=1):
         id_suffix, title_suffix = suffix(page)
         title = f"Please check{title_suffix}"
         rows = "".join(

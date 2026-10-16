@@ -1361,3 +1361,29 @@ def test_a_long_flow_is_drawn_left_to_right_and_a_short_one_top_to_bottom(data):
 
     assert "flowchart LR" in flow(render.FLOW_SIDEWAYS_NODES + 1)
     assert "flowchart TB" in flow(render.FLOW_SIDEWAYS_NODES)
+
+
+# --- review findings for v1.1 ---
+
+
+def test_the_please_check_slide_is_always_built_even_with_nothing_to_tick():
+    data = {"project": {"name": "x"}, "sources": [{"path": "a.md"}]}
+    ((sid, title, body),) = render.render_check(data)
+    assert sid == "check" and title == "Please check" and 'type="checkbox"' not in body
+
+
+def test_an_empty_source_section_gives_no_empty_eyebrow_pill():
+    assert render.eyebrow("a.md > ") == "" and render.eyebrow("a.md >  ") == ""
+    assert "eyebrow" not in note_slide(["Short."], src="a.md > ")
+
+
+def test_titles_and_initials_do_not_end_the_first_sentence():
+    first, rest = render.split_first_sentence("Ask Dr. Smith about it. Then wait.")
+    assert (first, rest) == ("Ask Dr. Smith about it.", "Then wait.")
+    first, _ = render.split_first_sentence("The U.S. Army agrees. Done.")
+    assert first == "The U.S. Army agrees."
+
+
+def test_a_word_that_merely_ends_like_an_abbreviation_still_ends_the_sentence():
+    first, rest = render.split_first_sentence("It was the first. Then came the next.")
+    assert (first, rest) == ("It was the first.", "Then came the next.")

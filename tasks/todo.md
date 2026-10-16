@@ -449,8 +449,8 @@ Notes: a long flow leaves empty space below it (the diagram is only as tall as i
 **Description:** Rewrite `references/design-rules.md` for the Keynote look (sizes, tiles, cards, the one glow, fit by splitting). Point `SPEC.md` > Design Direction to `SPEC-redesign.md`, and update `README.md` if it describes the look. Run `agent-skills:code-reviewer` on the v1.1 changes and handle findings per `CLAUDE.md`. Ask before installing the skill (`python tools/install.py`, shows the changes first) and before republishing both sample decks to their existing Artifact links.
 
 **Acceptance criteria:**
-- [ ] `design-rules.md` matches what the CSS and tests enforce; `SPEC.md` points to the redesign.
-- [ ] Review findings fixed or logged in `tasks/v1.1-review.md`.
+- [x] `design-rules.md` matches what the CSS and tests enforce; `SPEC.md` points to the redesign.
+- [x] Review findings fixed or logged in `tasks/v1.1-review.md`.
 - [ ] The installed skill is up to date, and both Artifact links show the Keynote decks (same URLs, new version).
 
 **Verification:**
@@ -460,6 +460,8 @@ Notes: a long flow leaves empty space below it (the diagram is only as tall as i
 **Dependencies:** Task 18
 **Files:** `skill/exec-summary/references/design-rules.md`, `SPEC.md`, `README.md`, `tasks/v1.1-review.md`
 **Scope:** S
+
+**Progress (2026-10-16):** docs done (`design-rules.md`, `SPEC.md`, `README.md`) and the code review done (`tasks/v1.1-review.md`). Still open, each waits for the owner's OK: `python tools/install.py`, republishing both sample Artifacts, and the owner check on the published links.
 
 ### - [ ] Checkpoint: v1.1 Done
 - [ ] `SPEC-redesign.md` success criteria 1-8 all pass
