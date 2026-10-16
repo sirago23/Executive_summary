@@ -187,7 +187,7 @@ def font_size_maximums() -> list[tuple[str, float]]:
 
 def test_only_two_titles_may_be_larger_than_the_slide_title_size():
     big = [(sel, size) for sel, size in font_size_maximums() if size > 2.75]
-    # 84 px for the project name, 64 px for the title of a launch-stage text slide
+    # 84 px for the project name, 64 px for the title of a short text slide
     assert big == [("#s-title h1", 5.25), (".stage.launch h2", 4.0)]
 
 
@@ -358,22 +358,14 @@ def test_the_diagram_theme_does_not_set_a_font_family():
     assert "fontFamily" not in JS
 
 
-STAGE_TOKENS = ("stage", "stage-text", "stage-muted", "stage-accent")
-
-
-def test_the_launch_stage_text_is_readable_on_its_dark_stage_and_on_paper():
-    on_screen = tokens(block(":root {"))
-    on_paper = THEMES["print"]
-    for theme in (on_screen, on_paper):
-        assert set(STAGE_TOKENS) <= set(theme)
-        for ink in ("stage-text", "stage-muted", "stage-accent"):
-            assert ratio(theme[ink], theme["stage"]) >= 4.5, ink
-    assert luminance(on_screen["stage"]) < 0.05  # dark in light mode too
-    assert luminance(on_paper["stage"]) > 0.9  # light in print
-
-
-def test_the_launch_stage_stays_dark_in_both_modes_because_only_the_root_block_defines_it():
-    assert "--stage:" not in dark_block() and "--stage:" not in block(':root[data-theme="dark"]')
+def test_the_launch_stage_blends_in_by_using_only_the_deck_colour_tokens():
+    assert "--stage" not in CSS
+    rule = block(".stage.launch {")
+    assert "var(--accent-soft)" in rule and "var(--surface)" in rule
+    for line in ("h2 {", ".lines p {"):
+        assert "color" not in block(f".stage.launch {line}") or "var(--" in block(
+            f".stage.launch {line}"
+        )
 
 
 def test_the_launch_stage_title_is_64_px_at_most_and_the_split_title_is_a_normal_title():
@@ -395,7 +387,6 @@ def test_a_slide_with_a_stage_has_no_padding_so_the_stage_fills_the_frame():
 
 def test_print_shows_both_stages_light_and_gives_the_panel_a_hairline():
     printed = CSS[CSS.index("@media print") :]
-    assert "--stage: #ffffff" in printed
     assert re.search(r"\.stage\.split \.panel \{[^}]*background:\s*var\(--accent-soft\)", printed)
     assert re.search(r"\.stage\.split \.panel \{[^}]*color:\s*var\(--text\)", printed)
     assert re.search(r"\.stage\.launch \{[^}]*background:\s*none", printed)
@@ -408,9 +399,3 @@ def test_a_flow_drawn_left_to_right_gets_narrow_boxes_so_its_text_stays_readable
 def test_on_a_desktop_window_a_tall_diagram_is_scaled_to_the_window_not_scrolled():
     desktop = CSS[CSS.index("On a desktop window a tall diagram") :]
     assert re.search(r"\.js \.diagram \.mermaid svg \{[^}]*max-height:\s*calc\(100dvh", desktop)
-
-
-def test_on_a_desktop_window_the_example_screen_uses_two_columns_after_its_base_rules():
-    two_columns = CSS.index("One example screen per slide")
-    assert two_columns > CSS.index(".wf-screen {")  # an earlier rule would lose to the base rule
-    assert two_columns > CSS.index(".wf-bars i {")

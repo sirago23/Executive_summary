@@ -34,7 +34,7 @@ from wireframe import render_wireframe
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
 STORIES_PER_SLIDE = 6
 ROWS_PER_SLIDE = 6
-WIREFRAMES_PER_SLIDE = 1
+WIREFRAMES_PER_SLIDE = 2
 STEPS_PER_SLIDE = 6
 RISKS_PER_SLIDE = 4
 TASK_SLIDE_BUDGET = 5  # rows on one tasks slide; each phase title counts as one row
@@ -43,7 +43,9 @@ CHECKPOINTS_PER_SLIDE = 3
 CHECKS_PER_SLIDE = 5  # tick boxes on one "Please check" slide
 RULE_ITEMS_PER_SLIDE = 9  # rule bullets on one slide; a group is never split
 FLOW_SIDEWAYS_NODES = 4  # a step-by-step flow with more boxes than this is drawn left to right
-LAUNCH_STAGE_CHARS = 280  # text-only slides up to this many characters get the launch stage
+LAUNCH_STAGE_CHARS = (
+    280  # text-only slides up to this many characters get the centred big-title look
+)
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
 MERMAID_SRI = "sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I"

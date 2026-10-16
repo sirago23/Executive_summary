@@ -10,8 +10,8 @@ The look of the deck is fixed in `templates/deck.css` and `scripts/render.py`. Y
 ## One slide, one screen
 
 - One slide on screen at a time. On a laptop window of 1280 x 650 px every slide fits with no scrolling. The renderer makes this true by **splitting**: a section that is too long continues on a "(continued)" slide. Text is never shrunk to make it fit.
-- Limits per slide: 6 table rows, 6 user stories, 6 phase steps, 4 risks, 3 checkpoints, 5 tick boxes, 1 example screen, 9 rule bullets (a rule group is never split), 4 tasks of one phase and a budget of 5 rows. A step-by-step flow with more than 4 boxes is drawn left to right.
-- A very long text in a real project may still scroll inside its slide. The top bar stays in place.
+- Limits per slide: 6 table rows, 6 user stories, 6 phase steps, 4 risks, 3 checkpoints, 5 tick boxes, 2 example screens side by side, 9 rule bullets (a rule group is never split), 4 tasks of one phase and a budget of 5 rows. A step-by-step flow with more than 4 boxes is drawn left to right.
+- A very long text in a real project may still scroll inside its slide, and so may the example-screens slides on a small window (about 1280 x 650); on a larger window they fit. The top bar stays in place.
 
 ## Tables
 
@@ -29,13 +29,13 @@ The look of the deck is fixed in `templates/deck.css` and `scripts/render.py`. Y
 
 The Goal slide and notes slides have only a title, paragraphs and a source. The renderer picks the style from the text, so keep paragraphs short and each first sentence meaningful on its own:
 
-- **Short text** (all paragraphs together 280 characters or fewer): a dark launch stage in both modes, with a big centred title and a soft glow. Prints light.
+- **Short text** (all paragraphs together 280 characters or fewer): a centred launch stage in the deck's own colours, with a big title and a soft glow like the title slide's.
 - **Longer text:** a split stage with an accent panel (label, title, source) and one row per paragraph. The first sentence of each paragraph is bold, so the bold lines alone give the gist.
 
 ## Style
 
 - Keynote look: one system sans-serif family, one accent colour, tight bold titles, cards and pills.
-- Glow only on the title slide and on a launch-stage slide. No other gradients, glow, emoji or stock illustrations.
+- Glow only on the title slide and on a launch-stage slide (both soft and in the theme colours). No other gradients, glow, emoji or stock illustrations.
 - Wireframes are grayscale boxes with labels in a card, clearly different from a real design, and always labelled "Example layout, not the final design".
 - Diagrams take their colours from the same colour tokens, in light and dark; print uses the light copy.
 - Light and dark mode (WCAG AA contrast), readable at 360 px wide, full keyboard use with a visible focus ring, and a print layout of one slide per page (printing is always light).

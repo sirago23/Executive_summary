@@ -57,7 +57,7 @@ Reference: Option C on the preview page. It applies to every slide type, not onl
 ### Text-only slides (added 2026-10-16, owner's choice at Checkpoint E2)
 
 The Goal slide and the notes slides have only a title, paragraphs and a source. Previews: https://claude.ai/artifact/C9EHdg17Tc9UV9B8nJZwy8 (Option B and Option C). The renderer picks the style from the text, with no new `summary.json` field:
-- **Launch stage** (all paragraphs together 280 characters or fewer): a dark stage in both modes, centred; an eyebrow, the title up to 64 px, a short accent rule, the paragraphs as centred lines, the source at the bottom, a soft glow at the top. Prints light, without the glow.
+- **Launch stage** (all paragraphs together 280 characters or fewer): centred, in the deck's own colours so it blends with the other slides (light or dark with the mode); an eyebrow, the title up to 64 px, a short accent rule, the paragraphs as centred lines, the source at the bottom, a soft accent glow at the top like the title slide's. Prints without the glow.
 - **Split stage** (longer text): a solid accent panel on the left with the eyebrow, the title and the source; one row per paragraph on the right, the first sentence of each in semi-bold, the rest muted. Stacks on a phone.
 - The eyebrow is the last part of the source (after the last " > ").
 
@@ -184,7 +184,7 @@ Render functions stay small and pure; every string from `summary.json` is escape
 
 1. **Fit target:** 1280 × 650 window (a common laptop with browser bars). Larger screens fit automatically.
 2. **Stat tile order:** build order, as above: user stories, delivery phases, tasks, checkpoints you approve, then acceptance criteria, risks, questions for you. Zero counts are skipped.
-3. **Opening mode:** follow the computer's light or dark setting, as now. The switch still works and the last choice is remembered. The launch stage is the one exception: it stays dark in light mode (owner's choice, 2026-10-16).
+3. **Opening mode:** follow the computer's light or dark setting, as now. The switch still works and the last choice is remembered.
 4. **Text-only slides** (2026-10-16, at E2): split stage for text-heavy slides, launch stage for very short ones (see "Text-only slides").
 
 ## Open Questions
