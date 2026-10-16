@@ -217,13 +217,14 @@ def to_flowchart(nodes: list[dict], edges: list[dict], direction: str = "LR") ->
 
 ## Design Direction
 
-- Calm, document-like slides. Neutral background, dark text, one accent color.
-- One sans-serif family, at most 3 text sizes per slide. Large slide titles, short bullet text.
-- Tables with clear headers and zebra rows. No more than about 8 rows per slide; longer tables continue on the next slide.
-- Wireframes are grayscale boxes with labels, clearly different from a real design.
+The deck has the "Keynote" look. The full design (colour tokens, sizes, cards, text-only slides, fit rules) is in [SPEC-redesign.md](SPEC-redesign.md), approved by the owner on 2026-10-16. In short:
+
+- A polished executive-presentation look: rounded slide frame, cards, pills, one sans-serif family, one accent colour, at most 3 text sizes per slide.
+- One slide on screen at a time, fitting a 1280 x 650 window without scrolling; long sections continue on a "(continued)" slide.
+- Tables with hairline rows and clear headers. Wireframes are grayscale boxes with labels, clearly different from a real design.
 - Status labels (High/Med/Low, phase) use text plus color, never color alone.
-- Avoid gradients, glow, emoji and stock illustrations.
-- WCAG 2.1 AA contrast in both light and dark mode. Full keyboard navigation.
+- A glow only on the title slide and on short text slides; no other gradients, emoji or stock illustrations.
+- WCAG 2.1 AA contrast in both light and dark mode. Full keyboard navigation. Print is always light, one slide per page.
 
 ## Testing Strategy
 

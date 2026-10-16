@@ -6,6 +6,7 @@ and checks that the planned system is what they want, before any code is written
 
 - Plain language, no jargon. Every item names the file and heading it came from (a quiet "Source" column).
 - One self-contained HTML file: works offline, in light and dark, on a phone (360 px) and in print (one slide per page).
+- A "Keynote" look: one slide on screen at a time, each fitting a laptop window without scrolling; key numbers on the title slide; short text slides get a launch-stage look. Details: `SPEC-redesign.md`.
 - Published as a **private** Claude Artifact. Re-running on the same files updates the same link.
 
 Claude does the judgment (wording, diagram nodes, screen sketches). Python scripts do the rest
