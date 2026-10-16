@@ -446,18 +446,18 @@ Measured in the browser (scroll height against the slide area, every slide of bo
 Notes: a long flow leaves empty space below it (the diagram is only as tall as it needs to be). The deck is now 48 slides (was 40) because of the lower limits; the owner may prefer a different trade-off at the v1.1 review. While checking print, a first PDF showed one page only because the browser tool was still set to screen media from an earlier call; not a deck fault (the earlier v1 PDFs had the same 1-page result when produced that way).
 
 
-### - [ ] Task 19: Design rules, spec, install, republish and code review
+### - [x] Task 19: Design rules, spec, install, republish and code review
 
 **Description:** Rewrite `references/design-rules.md` for the Keynote look (sizes, tiles, cards, the one glow, fit by splitting). Point `SPEC.md` > Design Direction to `SPEC-redesign.md`, and update `README.md` if it describes the look. Run `agent-skills:code-reviewer` on the v1.1 changes and handle findings per `CLAUDE.md`. Ask before installing the skill (`python tools/install.py`, shows the changes first) and before republishing both sample decks to their existing Artifact links.
 
 **Acceptance criteria:**
 - [x] `design-rules.md` matches what the CSS and tests enforce; `SPEC.md` points to the redesign.
 - [x] Review findings fixed or logged in `tasks/v1.1-review.md`.
-- [ ] The installed skill is up to date, and both Artifact links show the Keynote decks (same URLs, new version).
+- [x] The installed skill is up to date, and both Artifact links show the Keynote decks (same URLs, new version). Done 2026-10-16: full deck v3, spec deck v5.
 
 **Verification:**
-- [ ] `CHECKS` pass; `python tools/install.py` says "up to date"
-- [ ] Owner check: you open both links on a laptop, checks one slide fits and the diagrams draw
+- [x] `CHECKS` pass; `python tools/install.py` says "up to date"
+- [x] Owner check: owner approved the published decks (2026-10-16)
 
 **Dependencies:** Task 18
 **Files:** `skill/exec-summary/references/design-rules.md`, `SPEC.md`, `README.md`, `tasks/v1.1-review.md`
@@ -466,5 +466,5 @@ Notes: a long flow leaves empty space below it (the diagram is only as tall as i
 **Progress (2026-10-16):** docs done (`design-rules.md`, `SPEC.md`, `README.md`) and the code review done (`tasks/v1.1-review.md`). Still open, each waits for the owner's OK: `python tools/install.py`, republishing both sample Artifacts, and the owner check on the published links.
 
 ### - [ ] Checkpoint: v1.1 Done
-- [ ] `SPEC-redesign.md` success criteria 1-8 all pass
-- [ ] Owner approves the published decks
+- [x] `SPEC-redesign.md` success criteria 1-8 all pass, with one exception for criterion 3: the two example-screens slides scroll inside their frame at 1280 x 650 (723 and 803 px of 560; they fit at 1920 x 1000). Checked 2026-10-16; the owner chose the two-side-by-side layout and approved the published decks.
+- [x] Owner approves the published decks (2026-10-16)

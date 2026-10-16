@@ -178,8 +178,8 @@ Tasks 14-17 only depend on Task 13 and touch different render functions, but the
 - [ ] Task 19: Design rules, spec, install, republish and code review
 
 ### Checkpoint: v1.1 Done
-- [ ] `SPEC-redesign.md` success criteria 1-8 all pass
-- [ ] Owner approves the published decks
+- [x] `SPEC-redesign.md` success criteria 1-8 all pass, with one exception for criterion 3: the two example-screens slides scroll inside their frame at 1280 x 650 (723 and 803 px of 560; they fit at 1920 x 1000). Checked 2026-10-16; the owner chose the two-side-by-side layout and approved the published decks.
+- [x] Owner approves the published decks (2026-10-16)
 
 ## Risks and Mitigations
 
